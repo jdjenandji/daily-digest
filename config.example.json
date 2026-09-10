@@ -262,5 +262,14 @@
     "timeoutMs": 8000,
     "downloadTimeoutMs": 15000,
     "maxStaleDays": 7
+  },
+  "announcements": {
+    "enabled": true,
+    "label": "Announcements",
+    "url": "https://www.e-flux.com/announcements/",
+    "source": "e-flux",
+    "limit": 14,
+    "timeoutMs": 12000,
+    "maxStaleHours": 48
   }
 }

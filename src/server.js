@@ -107,6 +107,21 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Without this, a port clash throws an unhandled 'error' event and dumps a stack
+// trace, which says EADDRINUSE but not that the culprit is usually an earlier server
+// of this very project still running.
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    error(`port ${cfg.server.port} is already in use.`);
+    error('An earlier Daily Digest server is probably still running. Stop it with:');
+    error(`  lsof -ti :${cfg.server.port} | xargs kill`);
+    error(`Or set a different port in config.json under server.port.`);
+  } else {
+    error(err.message);
+  }
+  process.exit(1);
+});
+
 server.listen(cfg.server.port, cfg.server.host, () => {
   log(`Daily Digest ready at http://${cfg.server.host}:${cfg.server.port}`);
 });

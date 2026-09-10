@@ -11,6 +11,7 @@ import { findChrome } from '../src/render/pdf.js';
 import { fetchCalendar } from '../src/sources/calendar.js';
 import { queues, pendingJobs } from '../src/print.js';
 import { fetchPoem } from '../src/sources/poem.js';
+import { fetchAnnouncements } from '../src/sources/announcements.js';
 import { LABEL, PLIST } from './install-agent.mjs';
 import { relAge } from '../src/lib/fmt.js';
 
@@ -69,6 +70,19 @@ async function main() {
     if (d.notice) add('warn', 'Calendar', d.notice);
     else add('ok', 'Calendar', `${d.events.length} timed + ${d.allDay.length} all-day events today`);
   } catch (err) { add('fail', 'Calendar helper', err.message); }
+
+  // --- announcements --------------------------------------------------------
+  // This one parses markup rather than a feed, so a layout change on their side drops
+  // it to zero silently. Report the count so that reads as a fault, not a quiet day.
+  if (cfg.announcements?.enabled === false) add('warn', 'Announcements', 'disabled in config.json');
+  else {
+    const r = await fetchAnnouncements(cfg);
+    if (!r.ok) add('fail', 'Announcements', r.error);
+    else if (!r.data) add('warn', 'Announcements', 'nothing returned');
+    else add(r.fromCache ? 'warn' : 'ok', 'Announcements',
+      `${r.data.items.length} titles from ${r.data.source}`
+      + `${r.fromCache ? ' (cached)' : ''}`);
+  }
 
   // --- poem -----------------------------------------------------------------
   if (cfg.poem?.enabled === false) add('warn', 'Poem', 'disabled in config.json');

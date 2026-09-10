@@ -128,12 +128,18 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 }
 .image .credit { margin: 0.25em 0 0 3ch; color: var(--ink-faint); }
 
+/* ----------------------------- announcements ----------------------------- */
+
+.announcements .ann { margin: 0 0 0.24em; }
+.announcements .credit { margin: 0.6em 0 0; color: var(--ink-faint); }
+
 /* --------------------------------- poem ---------------------------------- */
 
 /* Fixed structure: page 1 is the day itself, page 2 the headlines, page 3 the poem.
    Each of the two later sections starts its own page rather than beginning in whatever
    gap the section above happens to leave. */
 .section.papers-page,
+.section.announcements,
 .section.poem { break-before: page; }
 .poem .attrib { margin: 0; color: var(--ink-soft); }
 .poem .bio { margin: 0 0 0.55em; color: var(--ink-soft); }

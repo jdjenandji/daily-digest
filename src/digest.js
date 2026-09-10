@@ -4,6 +4,7 @@ import { fetchNews, sources as newsSources } from './sources/news.js';
 import { fetchCalendar } from './sources/calendar.js';
 import { fetchPoem } from './sources/poem.js';
 import { fetchImage } from './sources/image.js';
+import { fetchAnnouncements } from './sources/announcements.js';
 import { grade } from './lib/result.js';
 import { dayBounds } from './config.js';
 
@@ -27,11 +28,12 @@ export async function collect(cfg) {
     fetchNews(cfg),
     fetchPoem(cfg),
     fetchImage(cfg),
+    fetchAnnouncements(cfg),
   ]);
 
-  let weather, calendar, markets, news, poem, image;
+  let weather, calendar, markets, news, poem, image, announcements;
   try {
-    [weather, calendar, markets, news, poem, image] = await Promise.race([work, budget]);
+    [weather, calendar, markets, news, poem, image, announcements] = await Promise.race([work, budget]);
   } catch {
     // Budget blown: take whatever has resolved rather than producing nothing.
     [weather, calendar, markets, news] = await Promise.all([
@@ -41,6 +43,7 @@ export async function collect(cfg) {
       Promise.resolve(news).catch(() => []),
       Promise.resolve(poem).catch(() => null),
       Promise.resolve(image).catch(() => null),
+      Promise.resolve(announcements).catch(() => null),
     ]);
   }
 
@@ -52,6 +55,8 @@ export async function collect(cfg) {
     { id: 'markets', label: 'Markets', state: markets?.data?.degraded ? 'stale' : grade(markets) },
     ...(poem?.data ? [{ id: 'poem', label: 'Poem', state: grade(poem) }] : []),
     ...(image?.data ? [{ id: 'image', label: cfg.image?.label ?? 'Mood', state: grade(image) }] : []),
+    ...(announcements?.data ? [{ id: 'announcements',
+      label: cfg.announcements?.label ?? 'Announcements', state: grade(announcements) }] : []),
     // Index against the ENABLED sources, not cfg.news: a disabled paper shifts every
     // later index and would silently attach the wrong name to the wrong feed.
     ...(news ?? []).map((r, i) => ({
@@ -73,8 +78,10 @@ export async function collect(cfg) {
     news: (news ?? []).map((r, i) => ({ ...r, name: enabledNews[i]?.name ?? r.id })),
     poem,
     image,
+    announcements,
     imageMaxHeightMm: cfg.image?.maxHeightMm,
     imageLabel: cfg.image?.label,
+    announcementsLabel: cfg.announcements?.label,
     statuses,
     degraded: statuses.filter((s) => s.state !== 'ok'),
   };

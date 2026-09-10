@@ -32,6 +32,7 @@ ${imageSection(model)}
   <h2>The Papers</h2>
   <div class="papers">${model.news.map(paper).join('\n')}</div>
 </section>
+${announcementsSection(model)}
 ${poemSection(model)}
 ${footer(model, tz)}
 </div>
@@ -185,6 +186,25 @@ function imageSection(model) {
   <h2>${esc(label)}</h2>
   <img style="max-height:${cap}mm" src="${d.dataUri}" alt="${esc(d.title || 'image of the day')}">
   <p class="credit">${esc(credit)}</p>
+</section>`;
+}
+
+/* ----------------------------- announcements ----------------------------- */
+
+function announcementsSection(model) {
+  const r = model.announcements;
+  if (!r || (r.ok && !r.data)) return '';
+  const label = model.announcementsLabel ?? 'Announcements';
+  if (!r.ok) {
+    return `<section class="section announcements"><h2>${esc(label)}</h2>
+      <p class="note">Announcements unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
+  }
+  const d = r.data;
+  const rows = d.items.map((i) => `<p class="ann">${esc(i.title)}</p>`).join('');
+  return `<section class="section announcements">
+  <h2>${esc(label)}</h2>
+  ${rows}
+  <p class="credit">${esc(d.source)}</p>
 </section>`;
 }
 

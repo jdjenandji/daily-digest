@@ -49,6 +49,7 @@ npm run agent:install
 | Poem | PoetryDB, public-domain poets only |
 | Poet biography | Wikipedia REST summary |
 | Image | Are.na public channel API |
+| Announcements | e-flux listing page, titles only |
 
 Three of these needed more than the obvious endpoint:
 
@@ -198,8 +199,9 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-The document has a fixed three-page structure: page one is the day itself (calendar,
-weather, markets, image), page two the headlines, page three the poem. The two later sections
+The document has a fixed four-page structure: page one is the day itself (calendar,
+weather, markets, image), page two the headlines, page three the exhibition
+announcements, page four the poem. The two later sections
 each force a page break rather than starting in whatever gap the section above leaves. A4, Courier, plain
 text in a single column. Every device that normally marks rank has
 been removed:
@@ -234,7 +236,14 @@ Each page has 269mm of usable height. A typical day measures about 167mm on page
 two. Page three is the tight one: at the top of the poem-length range it is close to
 full, and a longer poem than the current cap allows would spill onto a fourth page.
 
-Three pages is a tight budget once an image is on page one, and two settings pay for it:
+Announcements are titles only. e-flux publishes no feed, both documented RSS paths
+return 404, so this parses their listing page. Their robots.txt permits that path for
+general agents while blocking named training crawlers. Parsing markup is the most
+fragile thing in this project, so the section degrades to a labelled gap on a layout
+change and `doctor` reports the title count, since a silent drop to zero would otherwise
+look like a quiet day rather than a break.
+
+Three pages was a tight budget once an image was on page one, and two settings pay for it:
 `image.maxHeightMm` and `poem.maxLines`. They trade against each other. Measured on a
 normal day, a 50mm image holds three pages with poems up to 24 lines, and a 60mm image
 needs poems capped at 20. Raising either past that adds a fourth page. The image is
