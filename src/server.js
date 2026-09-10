@@ -1,40 +1,31 @@
 #!/usr/bin/env node
 import http from 'node:http';
-import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { loadConfig } from './config.js';
-import { collect } from './digest.js';
-import { renderPdf, sharedBrowser, closeShared } from './render/pdf.js';
 import { listCalendars } from './sources/calendar.js';
-import { acquire } from './lib/lock.js';
 import { log, error } from './lib/log.js';
 
+const run = promisify(execFile);
 const cfg = await loadConfig();
-let lastPdf = null;
-let idleTimer = null;
+const CLI = path.resolve('src/cli.js');
 
 /**
- * Re-import the template when its source changes.
+ * Generation runs as a child process, not in this one.
  *
- * Node caches ES module imports for the life of the process, so a server left running
- * while the template is edited keeps rendering the OLD layout, and every Generate
- * silently overwrites out/ with a stale PDF that looks like the edit never happened.
- * The stylesheet is read from disk per request and so was always current, which makes
- * the mismatch harder to spot rather than easier. Keying the import on mtime fixes it.
+ * Node caches ES module imports for the life of a process, so a server left running
+ * while the code is edited kept rendering the old pipeline and silently overwrote out/
+ * with a stale PDF. Reloading one module was not enough: the template was refreshed
+ * while digest.js and every source stayed cached, so a newly added section collected no
+ * data and rendered as nothing. Shelling out to the CLI gives one always-current code
+ * path and removes the whole class of bug, at the cost of process startup.
  */
-const TEMPLATE = path.resolve('src/render/template.js');
-let templateStamp = null;
-let renderHtml = null;
-
-async function loadTemplate() {
-  const { mtimeMs } = await stat(TEMPLATE);
-  if (mtimeMs !== templateStamp) {
-    ({ renderHtml } = await import(`./render/template.js?v=${mtimeMs}`));
-    if (templateStamp !== null) log('template changed on disk; reloaded');
-    templateStamp = mtimeMs;
-  }
-  return renderHtml;
+async function runCli(args = []) {
+  return run(process.execPath, [CLI, ...args], { cwd: process.cwd(), maxBuffer: 32 << 20 });
 }
+
 
 // Keep one browser warm between clicks, but do not hold Chrome resident all day.
 function touchIdle() {
@@ -59,44 +50,34 @@ const server = http.createServer(async (req, res) => {
 
     // Fast layout iteration: the same model, rendered as plain HTML in a live tab.
     if (url.pathname === '/api/preview') {
-      const render = await loadTemplate();
-      const html = await render(await collect(cfg));
+      const { stdout } = await runCli(['--html']);
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-      return res.end(html);
+      return res.end(stdout);
     }
 
     if (url.pathname === '/api/generate' && req.method === 'POST') {
-      const release = await acquire();
-      if (!release) return json(res, 409, { ok: false, error: 'a digest run is already in progress' });
-      try {
-        const started = Date.now();
-        const render = await loadTemplate();
-        const model = await collect(cfg);
-        const html = await render(model);
-        const browser = await sharedBrowser(cfg);
-        touchIdle();
-        const { pdf, pages } = await renderPdf(html, cfg, { browser });
-
-        await mkdir(cfg.paths.outDir, { recursive: true });
-        const name = cfg.output.filename.replace('{date}', model.ymd);
-        await writeFile(path.join(cfg.paths.outDir, name), pdf);
-        if (cfg.output.writeLatest) await writeFile(path.join(cfg.paths.outDir, 'latest.pdf'), pdf);
-        lastPdf = pdf;
-
-        return json(res, 200, {
-          ok: true,
-          file: name,
-          bytes: pdf.length,
-          pages,
-          ms: Date.now() - started,
-          statuses: model.statuses,
-          generatedAt: model.generatedAt,
-        });
-      } finally { await release(); }
+      const started = Date.now();
+      const { stdout, stderr } = await runCli(url.searchParams.has('noPrint') ? ['--no-print'] : []);
+      const log = `${stdout}${stderr}`;
+      if (/another digest run is already in progress/.test(log)) {
+        return json(res, 409, { ok: false, error: 'a digest run is already in progress' });
+      }
+      const file = path.join(cfg.paths.outDir, 'latest.pdf');
+      const buf = await readFile(file).catch(() => null);
+      if (!buf) return json(res, 500, { ok: false, error: 'the run produced no PDF', log });
+      return json(res, 200, {
+        ok: true,
+        file: path.basename(file),
+        bytes: buf.length,
+        ms: Date.now() - started,
+        pages: Number(/~(\d+) pages/.exec(log)?.[1]) || null,
+        log: log.trim(),
+        generatedAt: Date.now(),
+      });
     }
 
     if (url.pathname === '/api/pdf') {
-      const buf = lastPdf ?? await readFile(path.join(cfg.paths.outDir, 'latest.pdf')).catch(() => null);
+      const buf = await readFile(path.join(cfg.paths.outDir, 'latest.pdf')).catch(() => null);
       if (!buf) return json(res, 404, { ok: false, error: 'no digest generated yet' });
       res.writeHead(200, { 'content-type': 'application/pdf', 'content-disposition': 'inline; filename="daily-digest.pdf"' });
       return res.end(buf);
@@ -131,5 +112,5 @@ server.listen(cfg.server.port, cfg.server.host, () => {
 });
 
 for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, async () => { await closeShared().catch(() => {}); server.close(); process.exit(0); });
+  process.on(sig, () => { server.close(); process.exit(0); });
 }

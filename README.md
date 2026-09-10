@@ -27,6 +27,7 @@ npm run agent:install
 | Command | What it does |
 |---|---|
 | `npm start` | Web UI with a Generate button, at `127.0.0.1:4174` |
+| `npm run digest -- --html` | Render the page to stdout without writing or printing |
 | `npm run digest` | Generate once from the terminal and exit |
 | `npm run doctor` | Health-check every source, Chrome, the calendar grant, the printer and the schedule |
 | `npm run printers` | List the printer queues on this Mac |
@@ -139,6 +140,16 @@ A printer merely asleep is fine. CUPS queues the job and the printer wakes to ta
 Printing never fails the digest. The PDF is on disk before the print step runs, so a
 printer problem is logged, shown by `doctor`, and the run still exits 0. Run
 `npm run digest --no-print` to skip it for one run.
+
+## A note on the server
+
+`npm start` leaves a server running until you stop it, and its Generate button writes to
+the same `out/` files as the CLI and the scheduled job. Generation runs as a child
+process rather than inside the server, so a server left open while the code changes
+cannot write a stale PDF. That matters more than it sounds: Node caches module imports
+for the life of a process, and a partial fix that reloaded only the template still
+produced a page missing an entire newly added section, because the module that collects
+the data stayed cached.
 
 ## Calendar permissions
 

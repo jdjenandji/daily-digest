@@ -12,9 +12,17 @@ import { log, warn, error } from './lib/log.js';
 
 const dryRun = process.argv.includes('--dry-run');
 const noPrint = process.argv.includes('--no-print');
+// --html renders the page to stdout and exits, writing and printing nothing. The server
+// uses it so its preview always runs current code rather than a cached module graph.
+const htmlOnly = process.argv.includes('--html');
 
 async function main() {
   const cfg = await loadConfig();
+
+  if (htmlOnly) {
+    process.stdout.write(await renderHtml(await collect(cfg)));
+    return;
+  }
 
   const release = await acquire();
   if (!release) {
