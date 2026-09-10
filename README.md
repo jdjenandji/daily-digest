@@ -44,7 +44,7 @@ npm run agent:install
 |---|---|
 | Weather | Open-Meteo |
 | Calendar | macOS Calendar, via a small Swift EventKit helper app |
-| News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde — headlines only |
+| News | WSJ, FT, NYTimes, Reuters, Le Monde — headlines only (Bild configured but off) |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
 | Poem | PoetryDB, public-domain poets only |
 | Poet biography | Wikipedia REST summary |
@@ -197,7 +197,9 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-Order is today's calendar, the weather, the papers, markets, then the poem. A4, Courier, plain
+The document has a fixed three-page structure: page one is the day itself (calendar,
+weather, markets), page two the headlines, page three the poem. The two later sections
+each force a page break rather than starting in whatever gap the section above leaves. A4, Courier, plain
 text in a single column. Every device that normally marks rank has
 been removed:
 
@@ -226,10 +228,14 @@ flow and reports a page count instead.
 
 Order is weather, today's calendar, the papers, then markets last.
 
-Page count is not fixed. The document flows across as many pages as it needs, so a long
-poem or a heavy news day simply makes a longer digest rather than breaking the layout.
-Headlines only, a normal day is about 486mm of copy; the poem adds anywhere from 55mm
-for a short lyric to 235mm for a long one.
+Each page has 269mm of usable height. A typical day measures about 167mm on page one,
+250mm on page two and 260mm on page three, so the structure holds with room on the first
+two. Page three is the tight one: at the top of the poem-length range it is close to
+full, and a longer poem than the current cap allows would spill onto a fourth page.
+
+A news source can be switched off with `"enabled": false` in its config entry rather than
+deleted, so its URL and per-paper quirks survive and turning it back on is a one-word
+edit. Bild is off.
 
 The poem starts its own page. It is a change of register from the briefing, and a long
 one would otherwise begin in whatever gap the markets table happened to leave.

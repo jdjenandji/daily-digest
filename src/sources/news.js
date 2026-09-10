@@ -11,8 +11,14 @@ const HEADLINE_MAX = 95;
 
 /** Fetch all six sources in parallel. One dead paper never costs the others. */
 export async function fetchNews(cfg) {
-  const results = await Promise.all(cfg.news.map((s) => fetchOne(s, cfg)));
-  return results;
+  // A source can be switched off in config without losing its URL and quirk settings,
+  // so turning one back on is a one-word edit.
+  return Promise.all(sources(cfg).map((s) => fetchOne(s, cfg)));
+}
+
+/** The news sources that are actually switched on. */
+export function sources(cfg) {
+  return cfg.news.filter((s) => s.enabled !== false);
 }
 
 async function fetchOne(source, cfg) {

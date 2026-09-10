@@ -63,7 +63,8 @@
       "name": "Bild",
       "adapter": "rss",
       "url": "https://www.bild.de/feed/news.xml",
-      "kicker": true
+      "kicker": true,
+      "enabled": false
     },
     {
       "id": "lemonde",

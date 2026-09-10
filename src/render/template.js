@@ -24,12 +24,12 @@ ${masthead(model, tz)}
   ${weatherBody(model, tz)}
 </section>
 <section class="section">
-  <h2>The Papers</h2>
-  <div class="papers">${model.news.map(paper).join('\n')}</div>
-</section>
-<section class="section">
   <h2>Markets</h2>
   ${marketsTable(model, tz)}
+</section>
+<section class="section papers-page">
+  <h2>The Papers</h2>
+  <div class="papers">${model.news.map(paper).join('\n')}</div>
 </section>
 ${poemSection(model)}
 ${footer(model, tz)}

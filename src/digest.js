@@ -1,6 +1,6 @@
 import { fetchWeather } from './sources/weather.js';
 import { fetchMarkets } from './sources/markets.js';
-import { fetchNews } from './sources/news.js';
+import { fetchNews, sources as newsSources } from './sources/news.js';
 import { fetchCalendar } from './sources/calendar.js';
 import { fetchPoem } from './sources/poem.js';
 import { grade } from './lib/result.js';
@@ -41,14 +41,18 @@ export async function collect(cfg) {
     ]);
   }
 
+  const enabledNews = newsSources(cfg);
+
   const statuses = [
     { id: 'weather', label: cfg.location.label, state: grade(weather) },
     { id: 'calendar', label: 'Calendar', state: calendar?.data?.notice ? 'stale' : grade(calendar) },
     { id: 'markets', label: 'Markets', state: markets?.data?.degraded ? 'stale' : grade(markets) },
     ...(poem?.data ? [{ id: 'poem', label: 'Poem', state: grade(poem) }] : []),
+    // Index against the ENABLED sources, not cfg.news: a disabled paper shifts every
+    // later index and would silently attach the wrong name to the wrong feed.
     ...(news ?? []).map((r, i) => ({
       id: r.id,
-      label: cfg.news[i]?.name ?? r.id,
+      label: enabledNews[i]?.name ?? r.id,
       state: grade(r),
     })),
   ];
@@ -62,7 +66,7 @@ export async function collect(cfg) {
     weather,
     calendar,
     markets,
-    news: (news ?? []).map((r, i) => ({ ...r, name: cfg.news[i]?.name ?? r.id })),
+    news: (news ?? []).map((r, i) => ({ ...r, name: enabledNews[i]?.name ?? r.id })),
     poem,
     statuses,
     degraded: statuses.filter((s) => s.state !== 'ok'),

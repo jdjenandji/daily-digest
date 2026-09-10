@@ -117,8 +117,10 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 }
 /* --------------------------------- poem ---------------------------------- */
 
-/* The poem starts its own page: it is a change of register from the briefing, and a
-   long one would otherwise begin in whatever gap the markets table happened to leave. */
+/* Fixed structure: page 1 is the day itself, page 2 the headlines, page 3 the poem.
+   Each of the two later sections starts its own page rather than beginning in whatever
+   gap the section above happens to leave. */
+.section.papers-page,
 .section.poem { break-before: page; }
 .poem .attrib { margin: 0; color: var(--ink-soft); }
 .poem .bio { margin: 0 0 0.55em; color: var(--ink-soft); }
