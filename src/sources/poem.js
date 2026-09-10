@@ -26,6 +26,11 @@ export async function fetchPoem(cfg) {
   const tz = cfg.location.timezone;
   const { ymd } = dayBounds(tz);
   // PoetryDB has no range query, so pick a length first, then a poem of that length.
+  //
+  // Note these are PoetryDB's own linecount, which counts lines of verse and excludes
+  // the blank lines it uses for stanza breaks. A poem listed at 40 therefore renders
+  // taller than 40 lines: today's 40-line Thoreau came back with 48 line elements and
+  // 8 stanza breaks. The cap bounds the verse, not the printed height.
   const lengths = (p.lineCounts ?? [8, 10, 12, 14])
     .filter((n) => n <= (p.maxLines ?? 14));
   if (!lengths.length) return fail(ID, new Error('poem.lineCounts and poem.maxLines leave no options'));

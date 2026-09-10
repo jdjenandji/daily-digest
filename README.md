@@ -214,14 +214,16 @@ flow and reports a page count instead.
 
 Order is weather, today's calendar, the papers, then markets last.
 
-At 10.8pt, headlines only, a normal day runs about 486mm of copy against a 538mm
-two-page budget. The poem adds roughly 85mm for a sonnet, which takes it to three pages,
-or two sheets when duplexed. Set `poem.enabled` to `false` to return to a single sheet.
-Dropping the one type size variable is the other lever.
+Page count is not fixed. The document flows across as many pages as it needs, so a long
+poem or a heavy news day simply makes a longer digest rather than breaking the layout.
+Headlines only, a normal day is about 486mm of copy; the poem adds anywhere from 55mm
+for a short lyric to 235mm for a long one.
 
 The poem is chosen by the date, so it is the same all day and turns over at midnight
-rather than changing on every run. `poem.maxLines` bounds how much of the page it can
-take: 8 gives short lyrics, 14 allows sonnets.
+rather than changing on every run. `poem.lineCounts` sets the lengths it draws from,
+currently 8 to 40. Those are PoetryDB's own line counts, which count verse lines and
+exclude the blank lines used for stanza breaks, so a 40-line poem renders somewhat
+taller than 40 lines.
 
 News is headlines only. Standfirsts are not rendered, not stored and not parsed: the
 adapters no longer extract them at all. Bild's "Kicker - Headline" titles are still

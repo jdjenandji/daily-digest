@@ -234,12 +234,18 @@
   },
   "poem": {
     "enabled": true,
-    "maxLines": 14,
+    "maxLines": 40,
     "lineCounts": [
       8,
-      10,
       12,
-      14
+      14,
+      16,
+      20,
+      24,
+      28,
+      32,
+      36,
+      40
     ],
     "timeoutMs": 8000,
     "maxStaleDays": 7
