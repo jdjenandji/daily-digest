@@ -1,0 +1,7 @@
+node_modules/
+config.json
+native/bin/
+cache/
+logs/
+out/
+.DS_Store

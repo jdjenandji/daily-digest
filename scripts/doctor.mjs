@@ -1,0 +1,109 @@
+#!/usr/bin/env node
+import { access, stat, readFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import path from 'node:path';
+import { loadConfig, dayBounds } from '../src/config.js';
+import { fetchWeather } from '../src/sources/weather.js';
+import { fetchMarkets } from '../src/sources/markets.js';
+import { fetchNews } from '../src/sources/news.js';
+import { findChrome } from '../src/render/pdf.js';
+import { ensureBuilt, BIN } from './build-native.mjs';
+import { LABEL, PLIST } from './install-agent.mjs';
+import { relAge } from '../src/lib/fmt.js';
+
+const run = promisify(execFile);
+const rows = [];
+const add = (state, name, detail) => rows.push({ state, name, detail });
+
+/**
+ * The whole point of this script: a source can fail silently. The old WSJ feed
+ * returned HTTP 200 with valid XML frozen 20 months in the past. Checking liveness
+ * means checking content age, not status codes.
+ */
+async function main() {
+  const cfg = await loadConfig();
+
+  // --- news -----------------------------------------------------------------
+  const news = await fetchNews(cfg);
+  news.forEach((r, i) => {
+    const name = cfg.news[i].name;
+    if (!r.ok) return add('fail', name, r.error);
+    const d = r.data;
+    const age = d.newest ? relAge(Date.now() - d.newest) : 'no dates';
+    if (d.stale) return add('warn', name, `FROZEN: newest item is ${age} — the feed URL is probably dead`);
+    add('ok', name, `${d.items.length} headlines, newest ${age}`);
+  });
+
+  // --- weather --------------------------------------------------------------
+  const w = await fetchWeather(cfg);
+  if (!w.ok) add('fail', 'Weather', w.error);
+  else add(w.fromCache ? 'warn' : 'ok', `Weather (${cfg.location.label})`,
+    `${Math.round(w.data.now.temp)}°C, ${w.data.now.label}${w.fromCache ? ' — served from cache' : ''}`);
+
+  // --- markets --------------------------------------------------------------
+  const m = await fetchMarkets(cfg);
+  if (!m.ok) add('fail', 'Markets', m.error);
+  else {
+    const missing = m.data.groups.flatMap((g) => g.rows).filter((r) => r.price == null).map((r) => r.name);
+    add(m.data.degraded ? 'warn' : 'ok', `Markets (${m.data.provider})`,
+      `${m.data.live}/${m.data.total} instruments${missing.length ? ` — missing: ${missing.join(', ')}` : ''}`);
+  }
+
+  // --- chrome ---------------------------------------------------------------
+  try {
+    const chrome = await findChrome(cfg);
+    const pinned = chrome.includes('.cache/puppeteer');
+    add(pinned ? 'ok' : 'warn', 'Chrome',
+      pinned ? chrome.split('/chrome/')[1]?.split('/')[0] ?? chrome
+             : `using system Chrome (${chrome}) — print metrics may shift on its updates`);
+  } catch (err) { add('fail', 'Chrome', err.message); }
+
+  // --- calendar -------------------------------------------------------------
+  try {
+    await ensureBuilt({ quiet: true });
+    const { start, end } = dayBounds(cfg.location.timezone);
+    const { stdout } = await run(BIN, ['--no-prompt', '--start', start.toISOString(), '--end', end.toISOString()],
+      { timeout: cfg.timeouts.calendarMs });
+    const p = JSON.parse(stdout.trim());
+    if (p.status === 'ok') {
+      add('ok', 'Calendar', `${(p.events ?? []).length} events today`);
+    } else if (p.status === 'notDetermined') {
+      add('warn', 'Calendar', 'access not granted yet — run: npm run calendar:auth');
+    } else {
+      add('warn', 'Calendar', `${p.status} — System Settings › Privacy & Security › Calendars`);
+    }
+  } catch (err) { add('fail', 'Calendar helper', err.message); }
+
+  // --- schedule -------------------------------------------------------------
+  try {
+    await access(PLIST);
+    const body = await readFile(PLIST, 'utf8');
+    const node = body.match(/<string>([^<]*\/node)<\/string>/)?.[1];
+    // A Node upgrade silently invalidates the absolute path baked into the plist,
+    // and the only symptom is a digest that quietly stops appearing.
+    let nodeOk = false;
+    try { await access(node); nodeOk = true; } catch {}
+    if (!nodeOk) add('fail', 'Schedule', `plist points at a missing Node (${node}) — run: npm run agent:install`);
+    else {
+      const logPath = path.resolve('logs/agent.out.log');
+      const s = await stat(logPath).catch(() => null);
+      const since = s ? Date.now() - s.mtimeMs : null;
+      if (!s) add('warn', 'Schedule', `${LABEL} installed but has never run`);
+      else if (since > 48 * 3_600_000) add('warn', 'Schedule', `last run ${relAge(since)} — check logs/agent.err.log`);
+      else add('ok', 'Schedule', `${LABEL}, last run ${relAge(since)}`);
+    }
+  } catch { add('warn', 'Schedule', 'not installed — run: npm run agent:install'); }
+
+  // --- report ---------------------------------------------------------------
+  const mark = { ok: '  ok  ', warn: ' warn ', fail: ' FAIL ' };
+  const width = Math.max(...rows.map((r) => r.name.length));
+  console.log('');
+  for (const r of rows) console.log(`[${mark[r.state]}] ${r.name.padEnd(width)}  ${r.detail}`);
+  const fails = rows.filter((r) => r.state === 'fail').length;
+  const warns = rows.filter((r) => r.state === 'warn').length;
+  console.log(`\n${rows.length - fails - warns} ok, ${warns} warning(s), ${fails} failure(s)\n`);
+  process.exit(fails ? 1 : 0);
+}
+
+main().catch((err) => { console.error(err.stack ?? err.message); process.exit(1); });

@@ -1,0 +1,228 @@
+{
+  "location": {
+    "label": "Berlin",
+    "latitude": 52.52,
+    "longitude": 13.405,
+    "timezone": "Europe/Berlin"
+  },
+  "calendar": {
+    "include": null,
+    "exclude": [
+      "Birthdays",
+      "Siri Suggestions"
+    ],
+    "includeAllDay": true
+  },
+  "output": {
+    "dir": "./out",
+    "filename": "daily-digest-{date}.pdf",
+    "writeLatest": true,
+    "openAfterGenerate": false
+  },
+  "headlinesPerSource": 5,
+  "news": [
+    {
+      "id": "wsj",
+      "name": "The Wall Street Journal",
+      "adapter": "rss",
+      "url": "https://feeds.content.dowjones.io/public/rss/RSSWorldNews"
+    },
+    {
+      "id": "ft",
+      "name": "Financial Times",
+      "adapter": "rss",
+      "url": "https://www.ft.com/rss/home"
+    },
+    {
+      "id": "nyt",
+      "name": "The New York Times",
+      "adapter": "rss",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    },
+    {
+      "id": "reuters",
+      "name": "Reuters",
+      "adapter": "sitemap",
+      "url": "https://www.reuters.com/arc/outboundfeeds/news-sitemap/?outputType=xml",
+      "standfirst": false,
+      "excludeLocales": [
+        "de",
+        "fr",
+        "jp",
+        "br",
+        "cn",
+        "es",
+        "it",
+        "ar",
+        "kr",
+        "ru",
+        "in"
+      ]
+    },
+    {
+      "id": "bild",
+      "name": "Bild",
+      "adapter": "rss",
+      "url": "https://www.bild.de/feed/news.xml",
+      "kicker": true
+    },
+    {
+      "id": "lemonde",
+      "name": "Le Monde",
+      "adapter": "rss",
+      "url": "https://www.lemonde.fr/rss/une.xml",
+      "standfirst": false,
+      "headlineLines": 3,
+      "headlineMaxChars": 150
+    }
+  ],
+  "markets": {
+    "provider": "cnbc",
+    "groups": [
+      {
+        "label": "Americas",
+        "symbols": [
+          "spx",
+          "dji",
+          "ixic"
+        ]
+      },
+      {
+        "label": "Europe",
+        "symbols": [
+          "sx5e",
+          "dax",
+          "ftse",
+          "cac"
+        ]
+      },
+      {
+        "label": "Asia",
+        "symbols": [
+          "n225",
+          "hsi",
+          "ssec",
+          "nifty"
+        ]
+      },
+      {
+        "label": "Commodities",
+        "symbols": [
+          "gold",
+          "wti",
+          "brent"
+        ]
+      },
+      {
+        "label": "Crypto",
+        "symbols": [
+          "btc"
+        ]
+      }
+    ],
+    "instruments": {
+      "spx": {
+        "name": "S&P 500",
+        "cnbc": ".SPX",
+        "yahoo": "^GSPC"
+      },
+      "dji": {
+        "name": "Dow Jones",
+        "cnbc": ".DJI",
+        "yahoo": "^DJI"
+      },
+      "ixic": {
+        "name": "Nasdaq Composite",
+        "cnbc": ".IXIC",
+        "yahoo": "^IXIC"
+      },
+      "sx5e": {
+        "name": "Euro Stoxx 50",
+        "cnbc": ".STOXX50E",
+        "yahoo": "^STOXX50E"
+      },
+      "dax": {
+        "name": "DAX",
+        "cnbc": ".GDAXI",
+        "yahoo": "^GDAXI"
+      },
+      "ftse": {
+        "name": "FTSE 100",
+        "cnbc": ".FTSE",
+        "yahoo": "^FTSE"
+      },
+      "cac": {
+        "name": "CAC 40",
+        "cnbc": ".FCHI",
+        "yahoo": "^FCHI"
+      },
+      "n225": {
+        "name": "Nikkei 225",
+        "cnbc": ".N225",
+        "yahoo": "^N225"
+      },
+      "hsi": {
+        "name": "Hang Seng",
+        "cnbc": ".HSI",
+        "yahoo": "^HSI"
+      },
+      "ssec": {
+        "name": "Shanghai Composite",
+        "cnbc": ".SSEC",
+        "yahoo": "000001.SS"
+      },
+      "nifty": {
+        "name": "Nifty 50",
+        "cnbc": ".NSEI",
+        "yahoo": "^NSEI"
+      },
+      "gold": {
+        "name": "Gold",
+        "cnbc": "@GC.1",
+        "yahoo": "GC=F",
+        "digits": 2
+      },
+      "wti": {
+        "name": "Oil (WTI)",
+        "cnbc": "@CL.1",
+        "yahoo": "CL=F",
+        "digits": 2
+      },
+      "brent": {
+        "name": "Oil (Brent)",
+        "cnbc": "@LCO.1",
+        "yahoo": "BZ=F",
+        "digits": 2
+      },
+      "btc": {
+        "name": "Bitcoin",
+        "cnbc": "BTC.CM=",
+        "yahoo": "BTC-USD"
+      }
+    }
+  },
+  "timeouts": {
+    "weatherMs": 5000,
+    "newsMs": 8000,
+    "quoteMs": 5000,
+    "calendarMs": 8000,
+    "totalMs": 30000
+  },
+  "cache": {
+    "freshMinutes": 15,
+    "weatherMaxStaleHours": 6,
+    "marketsMaxStaleHours": 18,
+    "newsMaxStaleHours": 24
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 4174
+  },
+  "chrome": {
+    "executablePath": null
+  },
+  "schedule": {
+    "hour": 6,
+    "minute": 30
+  }
+}

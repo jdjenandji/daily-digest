@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Digest</title>
+<style>
+  :root {
+    --bg: #f6f6f4; --panel: #fff; --ink: #16181c; --soft: #5c626b; --faint: #949aa3;
+    --line: #e2e4e8; --accent: #1a3a5c;
+    --ok: #0a6b3d; --warn: #b8830a; --bad: #a8231d; --cache: #5c62a8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181c; --panel:#1e2126; --ink:#eef0f3; --soft:#a8aeb8; --faint:#767c86;
+            --line:#2e3238; --accent:#7fb0e0; --ok:#4fbe86; --warn:#e0ab3c; --bad:#e8776f; --cache:#9aa0d8; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 32px 20px 64px; }
+  header { display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+  h1 { font-size:26px; margin:0; letter-spacing:-.4px; }
+  .sub { color:var(--soft); font-size:13px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+  button { font:inherit; font-weight:600; border:1px solid var(--line); background:var(--panel);
+           color:var(--ink); padding:9px 16px; border-radius:8px; cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button:disabled { opacity:.55; cursor:progress; }
+  a.btn { text-decoration:none; }
+  .msg { font-size:13px; color:var(--soft); min-height:20px; }
+  .msg.err { color:var(--bad); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+  .chip { font-size:12px; padding:4px 10px; border-radius:99px; border:1px solid var(--line);
+          background:var(--panel); color:var(--soft); display:flex; align-items:center; gap:6px; }
+  .chip::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--faint); }
+  .chip.ok::before { background:var(--ok); }
+  .chip.stale::before { background:var(--warn); }
+  .chip.cached::before { background:var(--cache); }
+  .chip.failed::before { background:var(--bad); }
+  .chip.failed, .chip.stale { color:var(--ink); }
+  .frame { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden;
+           height:78vh; min-height:460px; }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; display:block; background:var(--panel); }
+  .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color:var(--faint); font-size:14px; }
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Daily Digest</h1>
+      <div class="sub" id="sub">Weather, calendar, six papers and world markets.</div>
+    </div>
+    <div class="bar">
+      <button class="primary" id="go">Generate</button>
+      <a class="btn" href="/api/pdf" download="daily-digest.pdf"><button>Download</button></a>
+      <a class="btn" href="/api/preview" target="_blank"><button>HTML preview</button></a>
+    </div>
+  </header>
+
+  <div class="chips" id="chips"></div>
+  <div class="msg" id="msg"></div>
+  <div class="frame" id="frame"><div class="placeholder">Click Generate to build today's digest.</div></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+async function status() {
+  try {
+    const s = await (await fetch('/api/status')).json();
+    if (s.lastGenerated) {
+      $('sub').textContent = `${s.location} · last generated ${fmtTime(s.lastGenerated)}`;
+      showPdf();
+    }
+  } catch {}
+}
+
+function showPdf() {
+  // The embedded PDF viewer paints a dark backdrop for a few seconds before the page
+  // appears, which reads as a failure. Keep a placeholder until it actually loads.
+  const frame = $('frame');
+  frame.innerHTML = '<div class="placeholder">Rendering PDF…</div>';
+  const iframe = document.createElement('iframe');
+  iframe.style.opacity = '0';
+  iframe.style.transition = 'opacity .2s';
+  iframe.addEventListener('load', () => {
+    frame.querySelector('.placeholder')?.remove();
+    iframe.style.opacity = '1';
+  });
+  iframe.src = `/api/pdf?t=${Date.now()}#toolbar=0`;
+  frame.appendChild(iframe);
+}
+
+function chips(list) {
+  $('chips').innerHTML = list.map((s) =>
+    `<span class="chip ${s.state}">${s.label}</span>`).join('');
+}
+
+$('go').addEventListener('click', async () => {
+  const btn = $('go');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  $('msg').className = 'msg'; $('msg').textContent = 'Fetching weather, calendar, papers and markets…';
+  try {
+    const r = await fetch('/api/generate', { method: 'POST' });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'generation failed');
+    chips(d.statuses);
+    const bad = d.statuses.filter((s) => s.state !== 'ok');
+    $('msg').textContent = `${d.file} · ${(d.bytes / 1024).toFixed(0)} KB · ${(d.ms / 1000).toFixed(1)}s`
+      + (bad.length ? ` · degraded: ${bad.map((b) => b.label).join(', ')}` : ' · all sources live');
+    $('sub').textContent = `Last generated ${fmtTime(d.generatedAt)}`;
+    showPdf();
+  } catch (err) {
+    $('msg').className = 'msg err';
+    $('msg').textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Generate';
+  }
+});
+
+status();
+</script>
+</body></html>

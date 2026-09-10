@@ -1,0 +1,303 @@
+/* A4 print sheet. No webfonts, no external images: an asset load race is the single
+   largest cause of a blank or half-rendered PDF, so everything here is local. */
+
+@page { size: A4; margin: 12mm; }
+
+:root {
+  --ink: #14161a;
+  --ink-soft: #4a5058;
+  --ink-faint: #878d96;
+  --rule: #d3d7dd;
+  --rule-soft: #e7e9ed;
+  --up: #0a6b3d;
+  --down: #a8231d;
+  --accent: #1a3a5c;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: var(--serif);
+  color: var(--ink);
+  background: #fff;
+  font-size: 9pt;
+  line-height: 1.32;
+}
+
+/* ------------------------------- masthead ------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2.5pt solid var(--ink);
+  padding-bottom: 3mm;
+  margin-bottom: 3.5mm;
+}
+.masthead h1 {
+  font-size: 26pt;
+  letter-spacing: -0.4pt;
+  margin: 0;
+  font-weight: 700;
+}
+.masthead .meta {
+  font-family: var(--sans);
+  font-size: 7.5pt;
+  color: var(--ink-soft);
+  text-align: right;
+  line-height: 1.5;
+}
+.masthead .meta strong { color: var(--ink); font-weight: 600; }
+
+/* -------------------------------- sections ------------------------------- */
+
+.section { margin-bottom: 4mm; }
+
+.section > h2 {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 1.1pt;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 1.8mm;
+  padding-bottom: 0.8mm;
+  border-bottom: 0.5pt solid var(--rule);
+}
+
+.note {
+  font-family: var(--sans);
+  font-size: 7.5pt;
+  color: var(--ink-soft);
+  background: #f4f5f7;
+  border-left: 2pt solid var(--rule);
+  padding: 1.6mm 2.2mm;
+  margin: 0;
+}
+
+/* -------------------------------- weather -------------------------------- */
+
+.weather {
+  display: flex;
+  align-items: stretch;
+  gap: 4mm;
+  border: 0.5pt solid var(--rule);
+  border-left: 2.5pt solid var(--accent);
+  padding: 2.5mm 3mm;
+}
+.weather .headline-temp {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  padding-right: 4mm;
+  border-right: 0.5pt solid var(--rule-soft);
+  min-width: 46mm;
+}
+.weather .icon { width: 13mm; height: 13mm; flex: none; }
+.weather .temp { font-size: 25pt; line-height: 1; font-weight: 600; letter-spacing: -1pt; }
+.weather .cond { font-family: var(--sans); font-size: 8pt; margin-top: 0.8mm; }
+.weather .feels { font-family: var(--sans); font-size: 7pt; color: var(--ink-faint); }
+
+.weather .facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1mm 3mm;
+  flex: 1;
+  align-content: center;
+}
+.weather .fact { font-family: var(--sans); }
+.weather .fact dt {
+  font-size: 6.2pt; text-transform: uppercase; letter-spacing: 0.6pt;
+  color: var(--ink-faint); margin: 0 0 0.3mm;
+}
+.weather .fact dd { font-size: 8.5pt; margin: 0; font-weight: 600; }
+
+/* --------------------------- calendar + markets -------------------------- */
+
+.band { display: grid; grid-template-columns: 1.5fr 1fr; gap: 6mm; }
+
+.event {
+  display: grid;
+  grid-template-columns: 17mm 1fr;
+  gap: 2mm;
+  padding: 1.3mm 0;
+  border-bottom: 0.5pt solid var(--rule-soft);
+  break-inside: avoid;
+}
+.event:last-child { border-bottom: none; }
+.event .when {
+  font-family: var(--sans);
+  font-size: 7.5pt;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.event .when .to { display: block; font-weight: 400; color: var(--ink-faint); font-size: 7pt; }
+.event .what { font-size: 9pt; font-weight: 600; }
+.event .where {
+  font-family: var(--sans);
+  font-size: 7pt;
+  color: var(--ink-faint);
+  margin-top: 0.3mm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event.all-day .when { color: var(--ink-faint); font-style: italic; }
+.empty { font-size: 9pt; color: var(--ink-faint); font-style: italic; padding: 2mm 0; }
+
+/* -------------------------------- markets -------------------------------- */
+
+.market-group + .market-group { margin-top: 1.8mm; }
+.market-group h3 {
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  font-weight: 700;
+  letter-spacing: 0.8pt;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.6mm;
+}
+table.quotes { width: 100%; border-collapse: collapse; }
+table.quotes td {
+  padding: 0.75mm 0;
+  border-bottom: 0.5pt solid var(--rule-soft);
+  font-size: 8pt;
+  vertical-align: baseline;
+}
+table.quotes tr:last-child td { border-bottom: none; }
+table.quotes .name { font-family: var(--sans); font-size: 7.6pt; }
+table.quotes .last,
+table.quotes .chg {
+  text-align: right;
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+table.quotes .last { font-weight: 600; }
+table.quotes .chg { width: 15mm; font-size: 7.6pt; }
+.up { color: var(--up); }
+.down { color: var(--down); }
+.flat { color: var(--ink-faint); }
+.missing { color: var(--ink-faint); font-style: italic; }
+
+/* --------------------------------- news ---------------------------------- */
+
+.papers {
+  columns: 2;
+  column-gap: 7mm;
+  column-fill: balance;
+}
+.paper {
+  break-inside: avoid;
+  margin-bottom: 4.5mm;
+}
+.paper > h3 {
+  font-family: var(--sans);
+  font-size: 7.6pt;
+  font-weight: 700;
+  letter-spacing: 0.4pt;
+  text-transform: uppercase;
+  margin: 0 0 1.4mm;
+  padding-bottom: 0.7mm;
+  border-bottom: 1.2pt solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.paper > h3 .age {
+  font-size: 6.2pt;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+.paper.is-stale > h3 { border-bottom-color: var(--down); }
+.paper.is-stale > h3 .age { color: var(--down); font-weight: 600; }
+
+.story { margin-bottom: 1.9mm; break-inside: avoid; }
+.story:last-child { margin-bottom: 0; }
+.story .kicker {
+  display: block;
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  font-weight: 700;
+  letter-spacing: 0.7pt;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.2mm;
+}
+.story .head {
+  font-size: 8.6pt;
+  font-weight: 600;
+  line-height: 1.24;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.story.wide .head { -webkit-line-clamp: 3; }
+.story .stand {
+  font-family: var(--sans);
+  font-size: 7pt;
+  color: var(--ink-soft);
+  line-height: 1.3;
+  margin: 0.4mm 0 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+/* -------------------------------- footer --------------------------------- */
+
+.footer {
+  margin-top: 3mm;
+  padding-top: 1.6mm;
+  border-top: 0.5pt solid var(--rule);
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  color: var(--ink-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+}
+.footer .chips { display: flex; flex-wrap: wrap; gap: 1mm 2.5mm; }
+.footer .chip::before {
+  content: "";
+  display: inline-block;
+  width: 1.3mm; height: 1.3mm;
+  border-radius: 50%;
+  margin-right: 0.9mm;
+  vertical-align: 0.1mm;
+  background: var(--up);
+}
+.footer .chip.stale::before { background: #c98a00; }
+.footer .chip.cached::before { background: #7a7fa8; }
+.footer .chip.failed::before { background: var(--down); }
+.footer .chip.stale, .footer .chip.failed { color: var(--ink-soft); }
+
+.page-break { break-before: page; }
+
+/* Screen preview only: show the A4 sheet on a grey ground so layout reads true. */
+@media screen {
+  body { background: #8b8e93; padding: 14mm 0; }
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm;
+    margin: 0 auto 8mm;
+    background: #fff;
+    box-shadow: 0 2mm 8mm rgba(0,0,0,.35);
+  }
+}
+@media print {
+  .sheet { width: auto; min-height: 0; padding: 0; margin: 0; box-shadow: none; }
+}
