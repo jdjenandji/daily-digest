@@ -231,5 +231,17 @@
     "colorMode": "monochrome",
     "cancelPreviousJobs": true,
     "extraOptions": []
+  },
+  "poem": {
+    "enabled": true,
+    "maxLines": 14,
+    "lineCounts": [
+      8,
+      10,
+      12,
+      14
+    ],
+    "timeoutMs": 8000,
+    "maxStaleDays": 7
   }
 }

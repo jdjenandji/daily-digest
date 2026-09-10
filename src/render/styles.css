@@ -115,6 +115,15 @@ table.quotes .chg  { width: 11ch; text-align: right; }
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+/* --------------------------------- poem ---------------------------------- */
+
+.poem .attrib { margin: 0 0 0.3em; color: var(--ink-soft); }
+.poem .verse { break-inside: avoid; }
+/* Poem lines can run past the column. A hanging indent makes a wrapped line read as
+   a continuation rather than as a new line of verse. */
+.poem .line { padding-left: 3ch; text-indent: -3ch; }
+.poem .line.blank { height: 0.55em; }
+
 /* -------------------------------- footer --------------------------------- */
 
 .footer { margin-top: 1.4em; color: var(--ink-soft); }

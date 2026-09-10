@@ -31,6 +31,7 @@ ${masthead(model, tz)}
   <h2>Markets</h2>
   ${marketsTable(model, tz)}
 </section>
+${poemSection(model)}
 ${footer(model, tz)}
 </div>
 </body></html>`;
@@ -162,6 +163,29 @@ function paper(r) {
   <h3><span>${esc(name)}</span><span class="age">${esc(label)}</span></h3>
   ${stories}
 </article>`;
+}
+
+/* --------------------------------- poem ---------------------------------- */
+
+function poemSection(model) {
+  const r = model.poem;
+  if (!r || (r.ok && !r.data)) return '';
+  if (!r.ok) {
+    return `<section class="section"><h2>Poem</h2>
+      <p class="note">Poem unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
+  }
+  const d = r.data;
+  // Each line is its own element: a poem's line breaks are part of the poem, so they
+  // must not be reflowed. Blank lines are stanza breaks and are kept as spacing.
+  const lines = d.lines.map((l) => (l.trim()
+    ? `<div class="line">${esc(l)}</div>`
+    : '<div class="line blank"></div>')).join('');
+
+  return `<section class="section poem">
+  <h2>Poem</h2>
+  <p class="attrib">${esc(d.title)} · ${esc(d.author)}</p>
+  <div class="verse">${lines}</div>
+</section>`;
 }
 
 /* -------------------------------- footer --------------------------------- */

@@ -10,6 +10,7 @@ import { fetchNews } from '../src/sources/news.js';
 import { findChrome } from '../src/render/pdf.js';
 import { fetchCalendar } from '../src/sources/calendar.js';
 import { queues, pendingJobs } from '../src/print.js';
+import { fetchPoem } from '../src/sources/poem.js';
 import { LABEL, PLIST } from './install-agent.mjs';
 import { relAge } from '../src/lib/fmt.js';
 
@@ -68,6 +69,16 @@ async function main() {
     if (d.notice) add('warn', 'Calendar', d.notice);
     else add('ok', 'Calendar', `${d.events.length} timed + ${d.allDay.length} all-day events today`);
   } catch (err) { add('fail', 'Calendar helper', err.message); }
+
+  // --- poem -----------------------------------------------------------------
+  if (cfg.poem?.enabled === false) add('warn', 'Poem', 'disabled in config.json');
+  else {
+    const r = await fetchPoem(cfg);
+    if (!r.ok) add('fail', 'Poem', r.error);
+    else if (!r.data) add('warn', 'Poem', 'no poem selected');
+    else add(r.fromCache ? 'warn' : 'ok', 'Poem',
+      `${r.data.lines.length} lines, ${r.data.author}${r.fromCache ? ' (from an earlier day)' : ''}`);
+  }
 
   // --- printer --------------------------------------------------------------
   // Print is the one step whose failure is otherwise completely invisible: no paper

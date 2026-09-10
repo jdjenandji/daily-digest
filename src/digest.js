@@ -2,6 +2,7 @@ import { fetchWeather } from './sources/weather.js';
 import { fetchMarkets } from './sources/markets.js';
 import { fetchNews } from './sources/news.js';
 import { fetchCalendar } from './sources/calendar.js';
+import { fetchPoem } from './sources/poem.js';
 import { grade } from './lib/result.js';
 import { dayBounds } from './config.js';
 
@@ -23,11 +24,12 @@ export async function collect(cfg) {
     fetchCalendar(cfg),
     fetchMarkets(cfg),
     fetchNews(cfg),
+    fetchPoem(cfg),
   ]);
 
-  let weather, calendar, markets, news;
+  let weather, calendar, markets, news, poem;
   try {
-    [weather, calendar, markets, news] = await Promise.race([work, budget]);
+    [weather, calendar, markets, news, poem] = await Promise.race([work, budget]);
   } catch {
     // Budget blown: take whatever has resolved rather than producing nothing.
     [weather, calendar, markets, news] = await Promise.all([
@@ -35,6 +37,7 @@ export async function collect(cfg) {
       Promise.resolve(calendar).catch(() => null),
       Promise.resolve(markets).catch(() => null),
       Promise.resolve(news).catch(() => []),
+      Promise.resolve(poem).catch(() => null),
     ]);
   }
 
@@ -42,6 +45,7 @@ export async function collect(cfg) {
     { id: 'weather', label: cfg.location.label, state: grade(weather) },
     { id: 'calendar', label: 'Calendar', state: calendar?.data?.notice ? 'stale' : grade(calendar) },
     { id: 'markets', label: 'Markets', state: markets?.data?.degraded ? 'stale' : grade(markets) },
+    ...(poem?.data ? [{ id: 'poem', label: 'Poem', state: grade(poem) }] : []),
     ...(news ?? []).map((r, i) => ({
       id: r.id,
       label: cfg.news[i]?.name ?? r.id,
@@ -59,6 +63,7 @@ export async function collect(cfg) {
     calendar,
     markets,
     news: (news ?? []).map((r, i) => ({ ...r, name: cfg.news[i]?.name ?? r.id })),
+    poem,
     statuses,
     degraded: statuses.filter((s) => s.state !== 'ok'),
   };

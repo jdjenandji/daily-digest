@@ -45,8 +45,9 @@ npm run agent:install
 | Calendar | macOS Calendar, via a small Swift EventKit helper app |
 | News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde — headlines only |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
+| Poem | PoetryDB, public-domain poets only |
 
-Two of these needed more than the obvious endpoint:
+Three of these needed more than the obvious endpoint:
 
 - **WSJ** moved feed hosts. The widely documented `feeds.a.dj.com` URL still returns
   HTTP 200 with valid XML, but the content has been frozen since January 2025. The live
@@ -54,6 +55,13 @@ Two of these needed more than the obvious endpoint:
 - **Reuters** retired every public RSS feed and returns 401 to non-browser clients. The
   digest reads their Google News sitemap instead, which is the freshest source of the
   six.
+- **The poem does not come from the Poetry Foundation**, which was the original ask.
+  Every endpoint there sits behind a Cloudflare bot challenge that returns 403 to any
+  non-browser client, and getting past that means defeating bot detection. Their Poem of
+  the Day also rotates contemporary work that is still in copyright, so reprinting it in
+  full every morning would not be right regardless. PoetryDB is an open API built to be
+  consumed programmatically and carries only public-domain poets, so the full text can be
+  printed freely.
 
 ## How it behaves when something breaks
 
@@ -177,7 +185,7 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-Order is today's calendar, the weather, the papers, then markets. A4, Courier, plain
+Order is today's calendar, the weather, the papers, markets, then the poem. A4, Courier, plain
 text in a single column. Every device that normally marks rank has
 been removed:
 
@@ -206,10 +214,14 @@ flow and reports a page count instead.
 
 Order is weather, today's calendar, the papers, then markets last.
 
-At 10.8pt, headlines only, a normal day runs about 500mm of copy against a 538mm
-two-page budget, so the papers fill most of page one and two and markets closes page
-two. A heavy news day flows onto a third page, which is a longer document rather than a
-broken one. Dropping the one size variable is the single lever for changing this.
+At 10.8pt, headlines only, a normal day runs about 486mm of copy against a 538mm
+two-page budget. The poem adds roughly 85mm for a sonnet, which takes it to three pages,
+or two sheets when duplexed. Set `poem.enabled` to `false` to return to a single sheet.
+Dropping the one type size variable is the other lever.
+
+The poem is chosen by the date, so it is the same all day and turns over at midnight
+rather than changing on every run. `poem.maxLines` bounds how much of the page it can
+take: 8 gives short lyrics, 14 allows sonnets.
 
 News is headlines only. Standfirsts are not rendered, not stored and not parsed: the
 adapters no longer extract them at all. Bild's "Kicker - Headline" titles are still
