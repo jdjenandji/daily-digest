@@ -5,6 +5,7 @@ import { dayBounds } from '../config.js';
 
 const ID = 'poem';
 const API = 'https://poetrydb.org';
+const WIKI = 'https://en.wikipedia.org/api/rest_v1/page/summary';
 
 /**
  * A poem for the day, from PoetryDB.
@@ -56,6 +57,10 @@ export async function fetchPoem(cfg) {
     };
     if (!data.title || !data.lines.length) throw new Error('poem record was incomplete');
 
+    // A note on the poet, if one can be had. Never fatal: a poem with no biography is
+    // still a poem, so this failing must not cost the section.
+    data.bio = await biography(data.author, p);
+
     await cache.write(key, data);
     return ok(ID, data);
   } catch (err) {
@@ -65,6 +70,55 @@ export async function fetchPoem(cfg) {
     if (stale) return ok(ID, stale.data, { fromCache: true, fetchedAt: stale.fetchedAt });
     return fail(ID, err);
   }
+}
+
+/**
+ * A short biographical note from Wikipedia's summary endpoint.
+ *
+ * Trimmed to the first couple of sentences and attributed, since Wikipedia text is
+ * CC BY-SA: this is a brief note pointing at the poet, not a reproduction of the article.
+ * Returns null on anything unexpected, including disambiguation pages, which are not a
+ * biography of anyone.
+ */
+async function biography(author, p) {
+  if (!author || p.biography === false) return null;
+  try {
+    const slug = encodeURIComponent(author.trim().replace(/\s+/g, '_'));
+    const d = await getJson(`${WIKI}/${slug}`, { timeoutMs: p.bioTimeoutMs ?? 6000, retries: 0 });
+    if (d?.type && d.type !== 'standard') return null;
+    const extract = (d?.extract ?? '').trim();
+    if (!extract) return null;
+    return {
+      text: firstSentences(extract, p.bioMaxChars ?? 240),
+      title: d.title ?? author,
+      url: d?.content_urls?.desktop?.page ?? null,
+      source: 'Wikipedia',
+    };
+  } catch { return null; }
+}
+
+/**
+ * Keep whole sentences only, up to the budget.
+ *
+ * An earlier version cut at the nearest boundary above a fraction of the limit, which
+ * rejected a perfectly good 79-character opening sentence for being "too short" and
+ * ellipsised mid-clause instead. Taking complete sentences means the note always ends
+ * on a full stop, and a short first sentence is a feature rather than a failure.
+ */
+function firstSentences(text, max) {
+  if (text.length <= max) return text;
+  const parts = text.match(/[^.!?]+[.!?]+["')\]]*\s*/g) ?? [];
+  let out = '';
+  for (const part of parts) {
+    if ((out + part).trim().length > max) break;
+    out += part;
+  }
+  out = out.trim();
+  if (out) return out;
+  // Not even one sentence fits: fall back to a word boundary.
+  const cut = text.slice(0, max + 1);
+  const sp = cut.lastIndexOf(' ');
+  return `${cut.slice(0, sp > 0 ? sp : max).replace(/[,;:]$/, '')}…`;
 }
 
 /** Fall back to any recent day's poem rather than leaving the section empty. */

@@ -248,6 +248,9 @@
       40
     ],
     "timeoutMs": 8000,
-    "maxStaleDays": 7
+    "maxStaleDays": 7,
+    "biography": true,
+    "bioMaxChars": 240,
+    "bioTimeoutMs": 6000
   }
 }

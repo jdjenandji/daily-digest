@@ -181,9 +181,16 @@ function poemSection(model) {
     ? `<div class="line">${esc(l)}</div>`
     : '<div class="line blank"></div>')).join('');
 
+  // Attributed because Wikipedia's text is CC BY-SA, and because a reader should be
+  // able to see where a claim about the poet came from.
+  const bio = d.bio
+    ? `<p class="bio">${esc(d.bio.text)} <span class="cite">${esc(d.bio.source)}</span></p>`
+    : '';
+
   return `<section class="section poem">
   <h2>Poem</h2>
   <p class="attrib">${esc(d.title)} · ${esc(d.author)}</p>
+  ${bio}
   <div class="verse">${lines}</div>
 </section>`;
 }

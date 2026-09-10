@@ -47,6 +47,7 @@ npm run agent:install
 | News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde — headlines only |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
 | Poem | PoetryDB, public-domain poets only |
+| Poet biography | Wikipedia REST summary |
 
 Three of these needed more than the obvious endpoint:
 
@@ -229,6 +230,14 @@ Page count is not fixed. The document flows across as many pages as it needs, so
 poem or a heavy news day simply makes a longer digest rather than breaking the layout.
 Headlines only, a normal day is about 486mm of copy; the poem adds anywhere from 55mm
 for a short lyric to 235mm for a long one.
+
+The poem starts its own page. It is a change of register from the briefing, and a long
+one would otherwise begin in whatever gap the markets table happened to leave.
+
+Under the title sits a one-sentence note on the poet, taken from Wikipedia's summary
+endpoint and attributed on the page, since that text is CC BY-SA. It is trimmed to whole
+sentences so it always ends on a full stop, and a poet with no usable article simply gets
+no note rather than costing the section.
 
 The poem is chosen by the date, so it is the same all day and turns over at midnight
 rather than changing on every run. `poem.lineCounts` sets the lengths it draws from,

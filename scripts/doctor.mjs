@@ -77,7 +77,9 @@ async function main() {
     if (!r.ok) add('fail', 'Poem', r.error);
     else if (!r.data) add('warn', 'Poem', 'no poem selected');
     else add(r.fromCache ? 'warn' : 'ok', 'Poem',
-      `${r.data.lines.length} lines, ${r.data.author}${r.fromCache ? ' (from an earlier day)' : ''}`);
+      `${r.data.lines.length} lines, ${r.data.author}`
+      + `, bio ${r.data.bio ? `from ${r.data.bio.source}` : 'unavailable'}`
+      + `${r.fromCache ? ' (from an earlier day)' : ''}`);
   }
 
   // --- printer --------------------------------------------------------------

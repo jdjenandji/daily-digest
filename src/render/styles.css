@@ -117,7 +117,12 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 }
 /* --------------------------------- poem ---------------------------------- */
 
-.poem .attrib { margin: 0 0 0.3em; color: var(--ink-soft); }
+/* The poem starts its own page: it is a change of register from the briefing, and a
+   long one would otherwise begin in whatever gap the markets table happened to leave. */
+.section.poem { break-before: page; }
+.poem .attrib { margin: 0; color: var(--ink-soft); }
+.poem .bio { margin: 0 0 0.55em; color: var(--ink-soft); }
+.poem .cite { color: var(--ink-faint); }
 .poem .verse { break-inside: avoid; }
 /* Poem lines can run past the column. A hanging indent makes a wrapped line read as
    a continuation rather than as a new line of verse. */
