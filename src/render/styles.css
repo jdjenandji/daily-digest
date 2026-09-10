@@ -1,16 +1,18 @@
-/* A4, Courier, ONE type size, text only.
-   No rules, borders, boxes or graphics anywhere: hierarchy is carried entirely by
-   weight, uppercase, letter-spacing, indentation and blank space. Content is a single
-   column that flows continuously across as many pages as it needs. */
+/* A4, Courier, plain text.
+   ONE type size, ONE weight, no headings, no rules, no boxes, no graphics.
+   Everything that would normally mark rank has been removed: no bold, no uppercase
+   display, no letter-spacing, no size steps. Grouping is carried by exactly two
+   things, indentation and blank space, plus a little grey to push supporting text
+   back and a little colour where a number's sign or a warning has to be readable. */
 
 @page { size: A4; margin: 14mm; }
 
 :root {
-  --fs: 8.6pt;              /* the only type size in the document */
-  --lh: 1.32;
+  --fs: 8.8pt;              /* the only type size in the document */
+  --lh: 1.34;
   --ink: #000;
-  --ink-soft: #454545;
-  --ink-faint: #8a8a8a;
+  --ink-soft: #565656;      /* supporting text: standfirsts, labels, timestamps */
+  --ink-faint: #8e8e8e;
   --up: #0a6b3d;
   --down: #a8231d;
   --mono: "Courier New", Courier, monospace;
@@ -24,136 +26,97 @@ body {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--fs);
+  font-weight: 400;
   line-height: var(--lh);
   color: var(--ink);
   background: #fff;
 }
 
-b, strong { font-weight: 700; }
+/* Nothing is bold anywhere, including tags the browser bolds by default. */
+h1, h2, h3, h4, b, strong, th { font-weight: 400; font-size: inherit; margin: 0; }
 
-/* ------------------------------- masthead ------------------------------- */
+/* -------------------------------- masthead ------------------------------- */
 
-.masthead { margin-bottom: 1.4em; }
-.masthead h1 {
-  margin: 0;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 4pt;
-}
-.masthead .meta { color: var(--ink-soft); }
-.masthead .meta strong { color: var(--ink); text-transform: uppercase; }
+.masthead { margin-bottom: 1.6em; }
 
 /* -------------------------------- sections ------------------------------- */
 
-.section { margin: 0 0 1.2em; }
-
-.section > h2 {
-  margin: 0 0 0.7em;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2pt;
-}
+.section { margin: 0 0 1.5em; }
+.section > h2 { margin: 0 0 0.5em; color: var(--ink-soft); }
 
 .note { margin: 0; color: var(--ink-soft); }
 
-/* Two spaces of hanging indent under every heading, so blocks read as grouped
-   without needing a rule or a box to contain them. */
-.section > h2 ~ *, .paper > h3 ~ * { margin-left: 2ch; }
+/* The section label sits flush and its content is indented under it. With no bold
+   and no size step, this indent is what says "these lines belong to that label". */
+.section > h2 ~ *, .paper > h3 ~ * { margin-left: 3ch; }
 
 /* -------------------------------- weather -------------------------------- */
 
 .weather { display: block; }
-.weather .icon { display: none; }          /* text only: no graphics */
-.weather .headline-temp { display: block; margin-bottom: 0.35em; }
-.weather .temp,
-.weather .cond { display: inline; font-weight: 700; text-transform: uppercase; }
+.weather .icon { display: none; }
+.weather .headline-temp { display: block; }
+.weather .temp, .weather .cond { display: inline; }
 .weather .temp::after { content: "  "; white-space: pre; }
-.weather .feels { display: inline; color: var(--ink-faint); text-transform: none; font-weight: 400; }
-.weather .feels::before { content: "  "; white-space: pre; }
+.weather .cond::after { content: "  \00b7  "; white-space: pre; }
+.weather .feels { display: inline; color: var(--ink-soft); }
 
-.weather .facts { display: block; }
+.weather .facts { display: block; margin-top: 0.2em; }
 .weather .fact { display: inline; white-space: nowrap; }
-.weather .fact + .fact::before { content: "   "; white-space: pre; }
-.weather .fact dt { display: inline; margin: 0; color: var(--ink-faint); text-transform: uppercase; }
-.weather .fact dd { display: inline; margin: 0 0 0 1ch; font-weight: 700; }
+.weather .fact + .fact::before { content: "   "; white-space: pre-wrap; }
+.weather .fact dt { display: inline; margin: 0; color: var(--ink-soft); }
+.weather .fact dd { display: inline; margin: 0 0 0 1ch; }
 .weather .fact:empty { display: none; }
 
 /* --------------------------- calendar + markets -------------------------- */
 
-.band { display: block; }                  /* one column: stack, do not sit side by side */
+.band { display: block; }
 
-.event { display: block; padding: 0; margin-bottom: 0.15em; break-inside: avoid; }
+.event { display: block; padding: 0; break-inside: avoid; }
 .event > div { display: inline; }
-.event .when { display: inline; font-weight: 700; white-space: nowrap; }
-.event .when .to { font-weight: 400; color: var(--ink-faint); }
+.event .when { display: inline; white-space: nowrap; color: var(--ink-soft); }
 .event .when .to::before { content: "\2013"; }
 .event .when::after { content: "  "; white-space: pre; }
-.event .what { display: inline; font-weight: 700; }
-.event .where { display: inline; color: var(--ink-faint); }
+.event .what { display: inline; }
+.event .where { display: inline; color: var(--ink-soft); }
 .event .where::before { content: "  \00b7  "; white-space: pre; }
-.event.all-day .when { font-weight: 400; color: var(--ink-faint); text-transform: uppercase; }
-.empty { color: var(--ink-faint); }
+.empty { color: var(--ink-soft); }
 
 /* -------------------------------- markets -------------------------------- */
 
-.market-group + .market-group { margin-top: 0.7em; }
-.market-group.provider h3 { font-weight: 400; letter-spacing: 0; text-transform: none; }
-.market-group h3 {
-  margin: 0 0 0.15em;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1pt;
-  color: var(--ink-soft);
-}
-table.quotes { border-collapse: collapse; margin-left: 2ch; }
+.market-group + .market-group { margin-top: 0.55em; }
+.market-group h3 { margin: 0 0 0.1em; color: var(--ink-soft); }
+.market-group.provider h3 { color: var(--ink-faint); }
+table.quotes { border-collapse: collapse; margin-left: 3ch; }
 table.quotes td { padding: 0; border: 0; white-space: nowrap; vertical-align: baseline; }
-/* Fixed-pitch type aligns the columns on its own; widths in ch, no rules needed. */
+/* Fixed pitch does the aligning; widths in ch, no rules and no weight needed. */
 table.quotes .name { width: 26ch; }
-table.quotes .last { width: 12ch; text-align: right; font-weight: 700; }
+table.quotes .last { width: 12ch; text-align: right; }
 table.quotes .chg  { width: 11ch; text-align: right; }
 .up { color: var(--up); }
 .down { color: var(--down); }
-.flat { color: var(--ink-faint); }
-.missing { color: var(--ink-faint); }
+.flat, .missing { color: var(--ink-soft); }
 
 /* --------------------------------- news ---------------------------------- */
 
-.papers { display: block; }                /* one column */
+.papers { display: block; }
 .paper { break-inside: auto; margin-bottom: 1.1em; }
-.paper > h3 {
-  margin: 0 0 0.5em;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.6pt;
-}
-.paper > h3 .age {
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-faint);
-}
+.paper > h3 { margin: 0 0 0.35em; color: var(--ink-soft); }
 .paper > h3 .age::before { content: "   "; white-space: pre; }
-.paper.is-stale > h3 .age { color: var(--down); font-weight: 700; }
+.paper > h3 .age { color: var(--ink-faint); }
+/* With no bold left, a frozen feed is flagged by colour alone, so it has to carry. */
+.paper.is-stale > h3 .age { color: var(--down); }
 
-.story { margin-bottom: 0.38em; break-inside: avoid; }
+.story { margin-bottom: 0.35em; break-inside: avoid; }
 .story:last-child { margin-bottom: 0; }
-.story .kicker {
-  display: inline;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6pt;
-  color: var(--ink-soft);
-}
+.story .kicker { display: inline; color: var(--ink-soft); }
 .story .kicker::after { content: "  "; white-space: pre; }
 .story .head {
   margin: 0;
-  font-weight: 700;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-.story.wide .head { -webkit-line-clamp: 2; }
 .story .stand {
   margin: 0;
   color: var(--ink-soft);
@@ -165,16 +128,19 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 
 /* -------------------------------- footer --------------------------------- */
 
-.footer { margin-top: 1.6em; color: var(--ink-faint); }
+.footer { margin-top: 1.4em; color: var(--ink-soft); }
 .footer .chips { display: inline; }
+.footer .chip { white-space: nowrap; }
+/* The gap between entries is a margin, not ::before content. Putting it in the content
+   meant the "chip + chip" rule overrode the stale and failed markers, so a broken
+   source still showed a "+". The template supplies a real space between chips, which
+   is also the only place the line is allowed to break. */
+.footer .chip + .chip { margin-left: 2ch; }
 .footer .chip::before { content: "+ "; }
 .footer .chip.stale::before { content: "! "; }
 .footer .chip.cached::before { content: "~ "; }
 .footer .chip.failed::before { content: "x "; }
-.footer .chip + .chip::before { content: "   + "; white-space: pre; }
-.footer .chip.stale + .chip::before,
-.footer .chip.failed + .chip::before { content: "   + "; white-space: pre; }
-.footer .chip.stale, .footer .chip.failed { color: var(--ink); font-weight: 700; }
+.footer .chip.stale, .footer .chip.failed { color: var(--down); }
 
 @media screen {
   body { background: #8b8e93; padding: 14mm 0; }

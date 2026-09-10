@@ -132,33 +132,39 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-A4, set entirely in Courier at **one type size**, text only, in a single column.
+A4, Courier, plain text in a single column. Every device that normally marks rank has
+been removed:
 
-Three constraints hold at once, and they are the design:
+- **One type size.** Exactly one `font-size` declaration in the stylesheet, on `body`,
+  reading a single `--fs` variable. Nothing overrides it.
+- **One weight.** No bold anywhere, including on tags the browser bolds by default.
+- **No headings.** Section labels are ordinary lines of text in ordinary case.
+- **No rules, boxes or graphics.** No borders, no tints, no icons.
+- **One column.** Nothing sits side by side; the document flows continuously across as
+  many pages as it needs.
 
-- **One size.** There is exactly one `font-size` declaration in the stylesheet, on
-  `body`, reading a single `--fs` variable. Nothing overrides it, so changing that one
-  value rescales the whole document.
-- **No rules, boxes or graphics.** No borders, no tints, no icons. The weather SVG is
-  gone. Rank is carried entirely by weight, uppercase, letter-spacing, a two-character
-  hanging indent under each heading, and blank space.
-- **One column.** Nothing sits side by side. Sections stack and the document flows
-  continuously across as many pages as it needs.
+What is left to carry structure is indentation and blank space. Each section label sits
+flush left and its content is indented three characters under it, papers indent again
+under their name. Grey pushes supporting text back: standfirsts, labels, timestamps.
+Colour appears in only two places, on the sign of a market change and on a warning.
 
-That last point removed a whole mechanism. The old layout pinned content to two fixed
-sheets and ran a post-render fit check that shrank the page if it overran. With a single
-continuous column Chrome paginates naturally, so there is nothing to shrink to fit and
-the scale-down would only make a longer digest unreadable. The renderer now measures and
-reports the page count instead of fighting it.
+That last point is load-bearing. With no bold left, a frozen feed is flagged by colour
+alone, so the stale marker and the footer status letters have to carry it: `+` for a
+live source, `~` cached, `!` stale, `x` failed.
 
-Line height and section spacing are tuned so a normal day lands on two pages: at the
-original spacing it ran to 573mm against a 538mm two-page budget, leaving a third sheet
-holding four lines. At the current spacing it is about 520mm. A heavy news day will
-still flow onto a third page, which is now a non-event rather than a layout failure.
+Removing the fixed two-page layout removed a mechanism with it. The renderer used to run
+a post-render fit check that scaled the page down when content overran. A single
+continuous column is paginated by the browser, so there is nothing to shrink to fit and
+that scale-down would only make a longer digest unreadable. The renderer measures the
+flow and reports a page count instead.
+
+Line height and spacing are tuned so a normal day lands on two pages, about 500mm of
+copy against a 538mm budget. A heavy news day flows onto a third page, which is a longer
+document rather than a broken one.
 
 Headlines are truncated in the data layer on a word boundary, so layout never depends on
-font metrics, then clamped to two lines in CSS with standfirsts clamped to one. At full
-column width most headlines fit on a single line.
+font metrics, then clamped to two lines with standfirsts clamped to one. At full column
+width most headlines fit on a single line.
 
 The page loads zero network assets. Courier New ships with macOS.
 

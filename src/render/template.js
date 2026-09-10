@@ -39,14 +39,15 @@ ${footer(model, tz)}
 /* ------------------------------- masthead -------------------------------- */
 
 function masthead(model, tz) {
-  const date = longDate(new Date(model.generatedAt), tz);
-  return `<header class="masthead">
-  <h1>Daily Digest</h1>
-  <div class="meta">
-    <strong>${esc(date)}</strong><br>
-    ${esc(model.location.label)} · generated ${esc(timeIn(model.generatedAt, tz))}
-  </div>
-</header>`;
+  // One plain line. With no heading styling left, a stacked masthead would just be
+  // two undifferentiated lines of text.
+  const parts = [
+    'Daily Digest',
+    longDate(new Date(model.generatedAt), tz),
+    model.location.label,
+    `generated ${timeIn(model.generatedAt, tz)}`,
+  ];
+  return `<header class="masthead">${esc(parts.join(' \u00b7 '))}</header>`;
 }
 
 /* -------------------------------- weather -------------------------------- */
@@ -164,8 +165,10 @@ function paper(r) {
 /* -------------------------------- footer --------------------------------- */
 
 function footer(model, tz) {
+  // Joined with a real space so the line can break between entries rather than
+  // through the middle of a paper's name.
   const chips = model.statuses.map((s) =>
-    `<span class="chip ${s.state}">${esc(s.label)}</span>`).join('');
+    `<span class="chip ${s.state}">${esc(s.label)}</span>`).join(' ');
   return `<div class="footer">
   <div class="chips">${chips}</div>
   <div>Generated ${esc(timeIn(model.generatedAt, tz))} in ${(model.tookMs / 1000).toFixed(1)}s</div>
