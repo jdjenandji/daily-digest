@@ -30,7 +30,7 @@ ${masthead(model, tz)}
 ${imageSection(model)}
 <section class="section papers-page">
   <h2>The Papers</h2>
-  <div class="papers">${model.news.map(paper).join('\n')}</div>
+  <div class="papers">${onPage(model, 'papers').map(paper).join('\n')}</div>
 </section>
 ${announcementsSection(model)}
 ${poemSection(model)}
@@ -205,7 +205,13 @@ function announcementsSection(model) {
   <h2>${esc(label)}</h2>
   ${rows}
   <p class="credit">${esc(d.source)}</p>
+  ${onPage(model, 'art').map(paper).join('\n')}
 </section>`;
+}
+
+/** News sources assigned to a given page of the digest. */
+function onPage(model, page) {
+  return (model.news ?? []).filter((r) => (r.page ?? 'papers') === page);
 }
 
 /* --------------------------------- poem ---------------------------------- */

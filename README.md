@@ -50,6 +50,7 @@ npm run agent:install
 | Poet biography | Wikipedia REST summary |
 | Image | Are.na public channel API |
 | Announcements | e-flux listing page, titles only |
+| Art news | Artnet News RSS, headlines only |
 
 Three of these needed more than the obvious endpoint:
 
@@ -200,8 +201,8 @@ rather than an empty section that would read as "no meetings today".
 ## Layout notes
 
 The document has a fixed four-page structure: page one is the day itself (calendar,
-weather, markets, image), page two the headlines, page three the exhibition
-announcements, page four the poem. The two later sections
+weather, markets, image), page two the newspaper headlines, page three the art
+page (exhibition announcements plus Artnet News), page four the poem. The two later sections
 each force a page break rather than starting in whatever gap the section above leaves. A4, Courier, plain
 text in a single column. Every device that normally marks rank has
 been removed:
@@ -235,6 +236,17 @@ Each page has 269mm of usable height. A typical day measures about 167mm on page
 250mm on page two and 260mm on page three, so the structure holds with room on the first
 two. Page three is the tight one: at the top of the poem-length range it is close to
 full, and a longer poem than the current cap allows would spill onto a fourth page.
+
+A news source carries an optional `page` field deciding which page it prints on:
+`papers` by default, or `art` to join the announcements. Artnet News is on the art page
+rather than with the newspapers, because page two was already close to full and the
+subject matter belongs together.
+
+Headlines per paper is four rather than five. At five the papers page measured 270mm
+against a 269mm limit on a day of long headlines and spilled onto a page of its own,
+taking the document to five pages. Four leaves 44mm of headroom, which absorbs the
+day-to-day variation in headline length. A source can override the count with its own
+`limit`, as Artnet does.
 
 Announcements are titles only. e-flux publishes no feed, both documented RSS paths
 return 404, so this parses their listing page. Their robots.txt permits that path for

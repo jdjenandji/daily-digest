@@ -19,7 +19,7 @@
     "writeLatest": true,
     "openAfterGenerate": false
   },
-  "headlinesPerSource": 5,
+  "headlinesPerSource": 4,
   "news": [
     {
       "id": "wsj",
@@ -73,6 +73,14 @@
       "url": "https://www.lemonde.fr/rss/une.xml",
       "headlineLines": 3,
       "headlineMaxChars": 150
+    },
+    {
+      "id": "artnet",
+      "name": "Artnet News",
+      "adapter": "rss",
+      "url": "https://news.artnet.com/feed",
+      "page": "art",
+      "limit": 8
     }
   ],
   "markets": {

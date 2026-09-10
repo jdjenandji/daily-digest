@@ -75,7 +75,12 @@ export async function collect(cfg) {
     weather,
     calendar,
     markets,
-    news: (news ?? []).map((r, i) => ({ ...r, name: enabledNews[i]?.name ?? r.id })),
+    news: (news ?? []).map((r, i) => ({
+      ...r,
+      name: enabledNews[i]?.name ?? r.id,
+      // Which page this source belongs on. Defaults to the newspapers.
+      page: enabledNews[i]?.page ?? 'papers',
+    })),
     poem,
     image,
     announcements,
