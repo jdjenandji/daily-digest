@@ -4,7 +4,6 @@ import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { loadConfig } from './config.js';
 import { collect } from './digest.js';
-import { renderHtml } from './render/template.js';
 import { renderPdf, sharedBrowser, closeShared } from './render/pdf.js';
 import { listCalendars } from './sources/calendar.js';
 import { acquire } from './lib/lock.js';
@@ -13,6 +12,29 @@ import { log, error } from './lib/log.js';
 const cfg = await loadConfig();
 let lastPdf = null;
 let idleTimer = null;
+
+/**
+ * Re-import the template when its source changes.
+ *
+ * Node caches ES module imports for the life of the process, so a server left running
+ * while the template is edited keeps rendering the OLD layout, and every Generate
+ * silently overwrites out/ with a stale PDF that looks like the edit never happened.
+ * The stylesheet is read from disk per request and so was always current, which makes
+ * the mismatch harder to spot rather than easier. Keying the import on mtime fixes it.
+ */
+const TEMPLATE = path.resolve('src/render/template.js');
+let templateStamp = null;
+let renderHtml = null;
+
+async function loadTemplate() {
+  const { mtimeMs } = await stat(TEMPLATE);
+  if (mtimeMs !== templateStamp) {
+    ({ renderHtml } = await import(`./render/template.js?v=${mtimeMs}`));
+    if (templateStamp !== null) log('template changed on disk; reloaded');
+    templateStamp = mtimeMs;
+  }
+  return renderHtml;
+}
 
 // Keep one browser warm between clicks, but do not hold Chrome resident all day.
 function touchIdle() {
@@ -37,7 +59,8 @@ const server = http.createServer(async (req, res) => {
 
     // Fast layout iteration: the same model, rendered as plain HTML in a live tab.
     if (url.pathname === '/api/preview') {
-      const html = await renderHtml(await collect(cfg));
+      const render = await loadTemplate();
+      const html = await render(await collect(cfg));
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
       return res.end(html);
     }
@@ -47,8 +70,9 @@ const server = http.createServer(async (req, res) => {
       if (!release) return json(res, 409, { ok: false, error: 'a digest run is already in progress' });
       try {
         const started = Date.now();
+        const render = await loadTemplate();
         const model = await collect(cfg);
-        const html = await renderHtml(model);
+        const html = await render(model);
         const browser = await sharedBrowser(cfg);
         touchIdle();
         const { pdf, pages } = await renderPdf(html, cfg, { browser });
