@@ -150,11 +150,8 @@ function paper(r) {
   const staleClass = d.stale ? ' is-stale' : '';
   const label = d.stale ? `stale · ${age}` : age;
 
-  const stories = d.items.map((i) => `<div class="story${d.hasStandfirst ? '' : ' wide'}">
-    ${i.kicker ? `<span class="kicker">${esc(i.kicker)}</span>` : ''}
-    <p class="head">${esc(i.headline)}</p>
-    ${i.standfirst ? `<p class="stand">${esc(i.standfirst)}</p>` : ''}
-  </div>`).join('');
+  const stories = d.items.map((i) =>
+    `<div class="story"><p class="head">${esc(i.headline)}</p></div>`).join('');
 
   return `<article class="paper${staleClass}">
   <h3><span>${esc(name)}</span><span class="age">${esc(label)}</span></h3>

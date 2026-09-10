@@ -11,7 +11,7 @@
   --fs: 10.8pt;              /* the only type size in the document */
   --lh: 1.34;
   --ink: #000;
-  --ink-soft: #565656;      /* supporting text: standfirsts, labels, timestamps */
+  --ink-soft: #565656;      /* supporting text: labels and timestamps */
   --ink-faint: #8e8e8e;
   --up: #0a6b3d;
   --down: #a8231d;
@@ -41,7 +41,7 @@ h1, h2, h3, h4, b, strong, th { font-weight: 400; font-size: inherit; margin: 0;
 
 /* -------------------------------- sections ------------------------------- */
 
-.section { margin: 0 0 1.5em; }
+.section { margin: 0 0 1.2em; }
 .section > h2 { margin: 0 0 0.5em; color: var(--ink-soft); }
 
 .note { margin: 0; color: var(--ink-soft); }
@@ -99,17 +99,15 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 /* --------------------------------- news ---------------------------------- */
 
 .papers { display: block; }
-.paper { break-inside: auto; margin-bottom: 1.1em; }
+.paper { break-inside: auto; margin-bottom: 0.9em; }
 .paper > h3 { margin: 0 0 0.35em; color: var(--ink-soft); }
 .paper > h3 .age::before { content: "   "; white-space: pre; }
 .paper > h3 .age { color: var(--ink-faint); }
 /* With no bold left, a frozen feed is flagged by colour alone, so it has to carry. */
 .paper.is-stale > h3 .age { color: var(--down); }
 
-.story { margin-bottom: 0.35em; break-inside: avoid; }
+.story { margin-bottom: 0.24em; break-inside: avoid; }
 .story:last-child { margin-bottom: 0; }
-.story .kicker { display: inline; color: var(--ink-soft); }
-.story .kicker::after { content: "  "; white-space: pre; }
 .story .head {
   margin: 0;
   display: -webkit-box;
@@ -117,15 +115,6 @@ table.quotes .chg  { width: 11ch; text-align: right; }
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-.story .stand {
-  margin: 0;
-  color: var(--ink-soft);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  overflow: hidden;
-}
-
 /* -------------------------------- footer --------------------------------- */
 
 .footer { margin-top: 1.4em; color: var(--ink-soft); }

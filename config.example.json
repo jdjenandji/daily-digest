@@ -44,7 +44,6 @@
       "name": "Reuters",
       "adapter": "sitemap",
       "url": "https://www.reuters.com/arc/outboundfeeds/news-sitemap/?outputType=xml",
-      "standfirst": false,
       "excludeLocales": [
         "de",
         "fr",
@@ -71,7 +70,6 @@
       "name": "Le Monde",
       "adapter": "rss",
       "url": "https://www.lemonde.fr/rss/une.xml",
-      "standfirst": false,
       "headlineLines": 3,
       "headlineMaxChars": 150
     }

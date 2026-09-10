@@ -40,7 +40,7 @@ npm run agent:install
 |---|---|
 | Weather | Open-Meteo |
 | Calendar | macOS Calendar, via a small Swift EventKit helper app |
-| News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde |
+| News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde — headlines only |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
 
 Two of these needed more than the obvious endpoint:
@@ -50,7 +50,7 @@ Two of these needed more than the obvious endpoint:
   feed is on `feeds.content.dowjones.io`.
 - **Reuters** retired every public RSS feed and returns 401 to non-browser clients. The
   digest reads their Google News sitemap instead, which is the freshest source of the
-  six. It carries no standfirst, so Reuters runs as headlines only.
+  six.
 
 ## How it behaves when something breaks
 
@@ -160,14 +160,18 @@ flow and reports a page count instead.
 
 Order is weather, today's calendar, the papers, then markets last.
 
-At 10.8pt a normal day runs about 640mm of copy, so three pages: the papers fill the
-first two and markets closes the third. Dropping the one size variable brings that back
-down, and around 8.8pt it lands on two pages. Nothing else needs touching to change it,
-which is the point of having a single size.
+At 10.8pt, headlines only, a normal day runs about 500mm of copy against a 538mm
+two-page budget, so the papers fill most of page one and two and markets closes page
+two. A heavy news day flows onto a third page, which is a longer document rather than a
+broken one. Dropping the one size variable is the single lever for changing this.
+
+News is headlines only. Standfirsts are not rendered, not stored and not parsed: the
+adapters no longer extract them at all. Bild's "Kicker - Headline" titles are still
+split, because that is what yields the headline rather than a run-on, but only the
+headline half is printed.
 
 Headlines are truncated in the data layer on a word boundary, so layout never depends on
-font metrics, then clamped to two lines with standfirsts clamped to one. At full column
-width most headlines fit on a single line.
+font metrics, then clamped to two lines. At full column width most fit on one line.
 
 The page loads zero network assets. Courier New ships with macOS.
 

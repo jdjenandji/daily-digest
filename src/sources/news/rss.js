@@ -1,6 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
 import { getText } from '../../lib/http.js';
-import { stripTags } from '../../lib/fmt.js';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -20,17 +19,11 @@ export async function fetchRss(source, cfg) {
   let items = doc?.rss?.channel?.item ?? doc?.feed?.entry ?? [];
   if (!Array.isArray(items)) items = [items];
 
-  return items.map((it) => {
-    const title = text(it.title);
-    const standfirst = stripTags(text(it.description) || text(it.summary));
-    const published = toDate(text(it.pubDate) || text(it.published) || text(it['dc:date']));
-    return {
-      headline: title,
-      standfirst: standfirst && standfirst !== title ? standfirst : '',
-      url: text(it.link?.['@_href'] ?? it.link),
-      published,
-    };
-  }).filter((i) => i.headline);
+  return items.map((it) => ({
+    headline: text(it.title),
+    url: text(it.link?.['@_href'] ?? it.link),
+    published: toDate(text(it.pubDate) || text(it.published) || text(it['dc:date'])),
+  })).filter((i) => i.headline);
 }
 
 function text(v) {

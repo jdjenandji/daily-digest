@@ -8,7 +8,6 @@ const ADAPTERS = { rss: fetchRss, sitemap: fetchSitemap };
 const STALE_AFTER_MS = 24 * 3_600_000;
 
 const HEADLINE_MAX = 95;
-const STANDFIRST_MAX = 110;
 
 /** Fetch all six sources in parallel. One dead paper never costs the others. */
 export async function fetchNews(cfg) {
@@ -54,28 +53,23 @@ function shape(source, raw, limit) {
     // A feed can return HTTP 200 with valid XML and still be frozen: the old WSJ
     // endpoint served January 2025 items indefinitely. Age is the only real check.
     stale: newest != null && Date.now() - newest > STALE_AFTER_MS,
-    hasStandfirst: source.standfirst !== false,
   };
 }
 
 function present(source, item) {
   let headline = item.headline;
-  let kicker = null;
 
-  // Bild titles are "Kicker - Headline" in every sampled item; split so the section
-  // matches the others rather than reading as run-on text.
+  // Bild titles are "Kicker - Headline" in every sampled item. Keep only the headline
+  // half; the kicker is a subline and is dropped.
   if (source.kicker) {
     const m = headline.match(/^(.{3,45}?)\s+-\s+(.+)$/);
-    if (m) { kicker = m[1].trim(); headline = m[2].trim(); }
+    if (m) headline = m[2].trim();
   }
 
-  const showStandfirst = source.standfirst !== false;
   return {
-    kicker: kicker ? clip(kicker, 45) : null,
-    // Le Monde fuses headline and subhead into one long sentence, so it gets more room
-    // and no separate standfirst.
+    // Headlines only. Le Monde still gets a longer cap because its headlines fuse
+    // headline and subhead into one sentence.
     headline: clip(headline, source.headlineMaxChars ?? HEADLINE_MAX),
-    standfirst: showStandfirst ? clip(item.standfirst, STANDFIRST_MAX) : '',
     url: item.url,
     published: item.published,
   };

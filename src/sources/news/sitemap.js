@@ -31,7 +31,6 @@ export async function fetchSitemap(source, cfg) {
     const loc = str(u.loc);
     return {
       headline: str(news.title),
-      standfirst: '',
       url: loc,
       published: toDate(str(news.publication_date) || str(u.lastmod)),
       locale: localeOf(loc),
