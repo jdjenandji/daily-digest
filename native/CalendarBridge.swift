@@ -11,12 +11,16 @@ import EventKit
 struct Bridge {
     static let store = EKEventStore()
 
+    /// Writes to --out when given, otherwise stdout. The file form exists because the
+    /// helper has to be launched through LaunchServices to hold its own TCC identity,
+    /// and a LaunchServices launch gives the caller no pipe to read.
     static func emit(_ object: [String: Any]) -> Never {
-        if let data = try? JSONSerialization.data(withJSONObject: object, options: []),
-           let text = String(data: data, encoding: .utf8) {
+        let data = (try? JSONSerialization.data(withJSONObject: object, options: []))
+            ?? Data(#"{"status":"error","message":"could not serialise output"}"#.utf8)
+        if let out = arg("--out") {
+            try? data.write(to: URL(fileURLWithPath: out), options: .atomic)
+        } else if let text = String(data: data, encoding: .utf8) {
             print(text)
-        } else {
-            print(#"{"status":"error","message":"could not serialise output"}"#)
         }
         exit(0)
     }
@@ -74,6 +78,10 @@ struct Bridge {
     static func run() {
         let current = EKEventStore.authorizationStatus(for: .event)
         let authorised = statusName(current) == "ok"
+
+        if has("--status") {
+            emit(["status": statusName(current)])
+        }
 
         if has("--request-access") {
             if authorised { emit(["status": "ok", "message": "calendar access already granted"]) }

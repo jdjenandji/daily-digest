@@ -2,12 +2,28 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>calendar-bridge</string>
   <key>CFBundleIdentifier</key>
   <string>com.jd.daily-digest.calendar-bridge</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
   <key>CFBundleName</key>
-  <string>Daily Digest Calendar Bridge</string>
+  <string>Daily Digest Calendar</string>
+  <key>CFBundleDisplayName</key>
+  <string>Daily Digest Calendar</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
   <key>CFBundleShortVersionString</key>
   <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>13.0</string>
+  <key>LSUIElement</key>
+  <true/>
   <key>NSCalendarsFullAccessUsageDescription</key>
   <string>Daily Digest reads today's events so it can print them in your morning PDF briefing.</string>
   <key>NSCalendarsUsageDescription</key>

@@ -1,36 +1,20 @@
 #!/usr/bin/env node
 import { access, stat, readFile } from 'node:fs/promises';
-import { execFile, execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
-import { loadConfig, dayBounds } from '../src/config.js';
+import { loadConfig } from '../src/config.js';
 import { fetchWeather } from '../src/sources/weather.js';
 import { fetchMarkets } from '../src/sources/markets.js';
 import { fetchNews } from '../src/sources/news.js';
 import { findChrome } from '../src/render/pdf.js';
-import { ensureBuilt, BIN } from './build-native.mjs';
+import { fetchCalendar } from '../src/sources/calendar.js';
 import { LABEL, PLIST } from './install-agent.mjs';
 import { relAge } from '../src/lib/fmt.js';
 
 const run = promisify(execFile);
 const rows = [];
 
-/** Walk up to the owning .app, which is what macOS attributes a privacy grant to. */
-function responsibleApp() {
-  try {
-    let pid = process.ppid;
-    for (let i = 0; i < 8 && pid > 1; i++) {
-      const line = execFileSync('ps', ['-o', 'ppid=,comm=', '-p', String(pid)], { encoding: 'utf8' }).trim();
-      if (!line) break;
-      const [, ppid, comm] = line.match(/^\s*(\d+)\s+(.*)$/) ?? [];
-      if (!comm) break;
-      const app = comm.match(/([^/]+)\.app\//);
-      if (app) return `${app[1]}.app`;
-      pid = Number(ppid);
-    }
-  } catch { /* best effort */ }
-  return 'this shell';
-}
 const add = (state, name, detail) => rows.push({ state, name, detail });
 
 /**
@@ -78,22 +62,10 @@ async function main() {
 
   // --- calendar -------------------------------------------------------------
   try {
-    await ensureBuilt({ quiet: true });
-    const { start, end } = dayBounds(cfg.location.timezone);
-    const { stdout } = await run(BIN, ['--no-prompt', '--start', start.toISOString(), '--end', end.toISOString()],
-      { timeout: cfg.timeouts.calendarMs });
-    const p = JSON.parse(stdout.trim());
-    if (p.status === 'ok') {
-      add('ok', 'Calendar', `${(p.events ?? []).length} events today`);
-    } else if (p.status === 'notDetermined') {
-      // The grant belongs to whichever app is responsible for this shell, so name it:
-      // a grant given to one host does not carry over to another, or to the schedule.
-      add('warn', 'Calendar', `no grant for this context (${responsibleApp()})`
-        + ' — run "npm run calendar:auth" from Terminal, and'
-        + ' "npm run calendar:auth:scheduled" for the daily job');
-    } else {
-      add('warn', 'Calendar', `${p.status} — System Settings › Privacy & Security › Calendars`);
-    }
+    const r = await fetchCalendar(cfg);
+    const d = r.data;
+    if (d.notice) add('warn', 'Calendar', d.notice);
+    else add('ok', 'Calendar', `${d.events.length} timed + ${d.allDay.length} all-day events today`);
   } catch (err) { add('fail', 'Calendar helper', err.message); }
 
   // --- schedule -------------------------------------------------------------

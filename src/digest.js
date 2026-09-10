@@ -10,7 +10,7 @@ import { dayBounds } from './config.js';
  * converts its own failures into a result envelope, so the model is always renderable
  * and the PDF is always produced.
  */
-export async function collect(cfg, { interactive = false } = {}) {
+export async function collect(cfg) {
   const startedAt = Date.now();
   const tz = cfg.location.timezone;
   const { ymd } = dayBounds(tz);
@@ -20,7 +20,7 @@ export async function collect(cfg, { interactive = false } = {}) {
 
   const work = Promise.all([
     fetchWeather(cfg),
-    fetchCalendar(cfg, { interactive }),
+    fetchCalendar(cfg),
     fetchMarkets(cfg),
     fetchNews(cfg),
   ]);

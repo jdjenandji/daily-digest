@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
 
     // Fast layout iteration: the same model, rendered as plain HTML in a live tab.
     if (url.pathname === '/api/preview') {
-      const html = await renderHtml(await collect(cfg, { interactive: false }));
+      const html = await renderHtml(await collect(cfg));
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
       return res.end(html);
     }
@@ -47,7 +47,7 @@ const server = http.createServer(async (req, res) => {
       if (!release) return json(res, 409, { ok: false, error: 'a digest run is already in progress' });
       try {
         const started = Date.now();
-        const model = await collect(cfg, { interactive: false });
+        const model = await collect(cfg);
         const html = await renderHtml(model);
         const browser = await sharedBrowser(cfg);
         touchIdle();

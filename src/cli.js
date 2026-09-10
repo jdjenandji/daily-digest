@@ -9,8 +9,6 @@ import { renderPdf } from './render/pdf.js';
 import { acquire } from './lib/lock.js';
 import { log, error } from './lib/log.js';
 
-const interactive = process.stdout.isTTY && !process.argv.includes('--no-prompt');
-
 async function main() {
   const cfg = await loadConfig();
 
@@ -22,7 +20,7 @@ async function main() {
 
   try {
     log('collecting sources…');
-    const model = await collect(cfg, { interactive });
+    const model = await collect(cfg);
 
     for (const s of model.statuses) {
       if (s.state !== 'ok') log(`  ${s.label}: ${s.state}`);
@@ -44,7 +42,7 @@ async function main() {
     log(`sources: ${model.statuses.filter((s) => s.state === 'ok').length}/${model.statuses.length} ok`
       + `${model.degraded.length ? `, degraded: ${model.degraded.map((d) => d.label).join(', ')}` : ''}`);
 
-    if (cfg.output.openAfterGenerate && interactive) {
+    if (cfg.output.openAfterGenerate && process.stdout.isTTY) {
       execFile('open', [file], () => {});
     }
   } finally {

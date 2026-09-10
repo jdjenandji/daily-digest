@@ -1,54 +1,64 @@
 #!/usr/bin/env node
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { stat, mkdir, chmod } from 'node:fs/promises';
+import { stat, mkdir, chmod, copyFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 const run = promisify(execFile);
 const ROOT = process.cwd();
 const SRC = path.join(ROOT, 'native', 'CalendarBridge.swift');
 const PLIST = path.join(ROOT, 'native', 'Info.plist');
-export const BIN = path.join(ROOT, 'native', 'bin', 'calendar-bridge');
+
+/**
+ * The helper is built as a real .app bundle, not a bare executable.
+ *
+ * This is not cosmetic. macOS will not hand calendar access to a loose command-line
+ * binary: it never appears in the Privacy pane and cannot raise the permission dialog,
+ * so the request just returns "denied" while the status stays "notDetermined". A
+ * properly structured, signed bundle with a usage string in its Info.plist is a
+ * first-class TCC subject that can prompt, can be listed, and holds its own grant.
+ */
+export const APP = path.join(ROOT, 'native', 'CalendarBridge.app');
+export const BIN = path.join(APP, 'Contents', 'MacOS', 'calendar-bridge');
 
 const mtime = async (p) => { try { return (await stat(p)).mtimeMs; } catch { return null; } };
 
-/**
- * Build only when the source is newer than the binary.
- *
- * This matters more than it looks. macOS keys a privacy grant to the binary's code
- * signature, so every recompile produces a new identity and SILENTLY revokes calendar
- * access. Rebuilding only on real source changes keeps the grant alive across ordinary
- * runs, and is why there is deliberately no postinstall hook.
- */
 export async function ensureBuilt({ force = false, quiet = false } = {}) {
   const binAt = await mtime(BIN);
   const srcAt = await mtime(SRC);
   if (srcAt == null) throw new Error(`missing ${SRC}`);
   const plistAt = (await mtime(PLIST)) ?? 0;
 
+  // Rebuild only on a real source change. macOS keys the privacy grant to the code
+  // signature, so a needless recompile silently revokes calendar access. This is also
+  // why there is deliberately no postinstall hook.
   if (!force && binAt != null && binAt > srcAt && binAt > plistAt) {
     if (!quiet) console.log('calendar-bridge is up to date');
-    return { built: false, path: BIN };
+    return { built: false, path: BIN, app: APP };
   }
 
-  await mkdir(path.dirname(BIN), { recursive: true });
-  if (!quiet) console.log('building calendar-bridge…');
+  if (!quiet) console.log('building CalendarBridge.app…');
+  await rm(APP, { recursive: true, force: true });
+  await mkdir(path.join(APP, 'Contents', 'MacOS'), { recursive: true });
 
-  // The embedded __info_plist section is what makes the permission dialog show a
-  // readable reason instead of a bare executable path.
   await run('swiftc', [
     '-O', '-o', BIN, SRC,
     '-framework', 'EventKit', '-framework', 'Foundation',
-    '-Xlinker', '-sectcreate', '-Xlinker', '__TEXT', '-Xlinker', '__info_plist', '-Xlinker', PLIST,
   ]);
   await chmod(BIN, 0o755);
-  await run('codesign', ['-s', '-', '-f', BIN]);
+  await copyFile(PLIST, path.join(APP, 'Contents', 'Info.plist'));
 
-  if (!quiet) console.log(`built ${path.relative(ROOT, BIN)}`);
-  if (binAt != null && !quiet) {
-    console.log('note: the binary changed identity, so macOS may ask for calendar access again.');
+  // Sign the BUNDLE, not the inner binary, so the identity is the app's.
+  await run('codesign', ['--force', '--sign', '-', '--identifier',
+    'com.jd.daily-digest.calendar-bridge', APP]);
+
+  if (!quiet) {
+    console.log(`built ${path.relative(ROOT, APP)}`);
+    if (binAt != null) {
+      console.log('note: the bundle changed identity, so macOS will ask for calendar access again.');
+    }
   }
-  return { built: true, path: BIN };
+  return { built: true, path: BIN, app: APP };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

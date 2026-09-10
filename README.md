@@ -30,8 +30,7 @@ npm run agent:install
 | `npm run digest` | Generate once from the terminal and exit |
 | `npm run doctor` | Health-check every source, Chrome, the calendar grant and the schedule |
 | `npm run calendars` | List your calendar names, for the `include`/`exclude` config |
-| `npm run calendar:auth` | Grant calendar access for runs started from your terminal |
-| `npm run calendar:auth:scheduled` | Grant calendar access for the scheduled daily run |
+| `npm run calendar:auth` | Grant calendar access, once, for every context |
 | `npm run agent:install` | Schedule a daily run via launchd |
 | `npm run agent:uninstall` | Remove the schedule |
 
@@ -40,7 +39,7 @@ npm run agent:install
 | Section | Source |
 |---|---|
 | Weather | Open-Meteo |
-| Calendar | macOS Calendar, via a small Swift EventKit helper |
+| Calendar | macOS Calendar, via a small Swift EventKit helper app |
 | News | WSJ, FT, NYTimes, Reuters, Bild, Le Monde |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
 
@@ -90,46 +89,43 @@ then set `calendar.include` to a list of them, or leave it `null` for all and us
 
 ## Calendar permissions
 
-This is the fiddliest part, and the reason is worth understanding: macOS attributes a
-privacy grant to the **responsible process**, not to the helper binary. Three different
-contexts can run this app, and each holds a separate grant.
-
-| You run it from | Responsible process | How to grant |
-|---|---|---|
-| Terminal.app | Terminal.app | System Settings › Privacy & Security › Calendars |
-| An editor or agent that embeds a shell | That host app | Same pane, if the host is listed |
-| The daily schedule | The helper binary itself | `npm run calendar:auth:scheduled` |
-
-So a grant given to Terminal does **not** carry over to a run started from anywhere
-else, and neither carries over to the scheduled job.
-
-**For manual runs**, use Terminal.app:
+Grant it once:
 
 ```bash
-npm run calendar:auth   # then answer the dialog, or add Terminal in the Calendars pane
-npm run digest
+npm run calendar:auth
 ```
 
-If a host app has no calendar usage string in its `Info.plist`, macOS refuses to show
-the dialog at all and the request returns `denied` instantly while the status stays
-`notDetermined`. There is no way around that from inside this project; run it from
-Terminal instead, or add the host app in the Calendars pane by hand.
+That covers everything: this terminal, any editor or agent, and the scheduled daily
+run. Verify with `npm run doctor`.
 
-**For the scheduled run**, the daily job always passes `--no-prompt` so it can never
-raise a dialog on a machine nobody is sitting at. That also means it can never ask for
-access on its own, so grant it once, deliberately:
+**Why it is built the way it is.** macOS attributes a privacy grant to the *responsible
+process*, not to whatever binary does the asking. A helper executed straight from a
+shell is attributed to the app that owns that shell, which has three consequences: the
+grant has to be repeated for every terminal, editor or agent you run it from; a host app
+with no calendar usage string in its `Info.plist` cannot raise the dialog at all, so the
+request returns `denied` instantly while the status stays `notDetermined`; and the
+scheduled job, which has no owning app, is a fourth identity again.
 
-```bash
-npm run calendar:auth:scheduled
-```
+A loose command-line binary is also a poor TCC subject in its own right. It does not
+appear in the Privacy pane and cannot prompt.
 
-That loads a one-shot LaunchAgent which requests access under launchd's identity, waits
-for you to answer, then removes itself. If no dialog appears, open System Settings ›
-Privacy & Security › Calendars and enable `calendar-bridge`.
+So the helper is built as a real `.app` bundle and launched through LaunchServices
+rather than executed directly. Launched as an app it is its own responsible process, so
+one grant holds from anywhere. LaunchServices gives the caller no pipe, so the helper
+writes its JSON to a file that the Node side polls for.
 
-Recompiling the helper revokes every one of these grants, because macOS keys them to the
-binary's code signature. The build script only rebuilds when the Swift source actually
-changes, and there is deliberately no `postinstall` hook.
+Two things follow from this that are worth knowing:
+
+- **Recompiling revokes the grant.** macOS keys it to the bundle's code signature, so a
+  rebuild is a new identity. The build script only rebuilds when the Swift source or the
+  plist actually changes, and there is deliberately no `postinstall` hook. After a real
+  source change, run `npm run calendar:auth` again.
+- **The daily job never prompts.** It always passes `--no-prompt`, so it cannot raise a
+  dialog on a machine nobody is sitting at. It relies on the grant already being in
+  place.
+
+If the dialog does not appear, enable "Daily Digest Calendar" in System Settings ›
+Privacy & Security › Calendars.
 
 Without a grant the digest still generates. The calendar block prints a visible notice
 rather than an empty section that would read as "no meetings today".
