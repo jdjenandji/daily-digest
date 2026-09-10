@@ -158,9 +158,12 @@ continuous column is paginated by the browser, so there is nothing to shrink to 
 that scale-down would only make a longer digest unreadable. The renderer measures the
 flow and reports a page count instead.
 
-Line height and spacing are tuned so a normal day lands on two pages, about 500mm of
-copy against a 538mm budget. A heavy news day flows onto a third page, which is a longer
-document rather than a broken one.
+Order is weather, today's calendar, the papers, then markets last.
+
+At 10.8pt a normal day runs about 640mm of copy, so three pages: the papers fill the
+first two and markets closes the third. Dropping the one size variable brings that back
+down, and around 8.8pt it lands on two pages. Nothing else needs touching to change it,
+which is the point of having a single size.
 
 Headlines are truncated in the data layer on a word boundary, so layout never depends on
 font metrics, then clamped to two lines with standfirsts clamped to one. At full column
