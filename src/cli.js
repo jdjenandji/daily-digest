@@ -6,8 +6,12 @@ import { loadConfig } from './config.js';
 import { collect } from './digest.js';
 import { renderHtml } from './render/template.js';
 import { renderPdf } from './render/pdf.js';
+import { printFile } from './print.js';
 import { acquire } from './lib/lock.js';
-import { log, error } from './lib/log.js';
+import { log, warn, error } from './lib/log.js';
+
+const dryRun = process.argv.includes('--dry-run');
+const noPrint = process.argv.includes('--no-print');
 
 async function main() {
   const cfg = await loadConfig();
@@ -40,6 +44,14 @@ async function main() {
     log(`wrote ${file} (${(pdf.length / 1024).toFixed(0)} KB, ${heightMm}mm of copy, ~${pages} pages)`);
     log(`sources: ${model.statuses.filter((s) => s.state === 'ok').length}/${model.statuses.length} ok`
       + `${model.degraded.length ? `, degraded: ${model.degraded.map((d) => d.label).join(', ')}` : ''}`);
+
+    // Printing is the last step and never fails the run: the PDF is already on disk.
+    if (!noPrint) {
+      const r = await printFile(file, cfg, { dryRun });
+      if (r.skipped) log(`not printed: ${r.skipped}`);
+      else if (r.ok && !r.dryRun) log(`sent to ${r.printer} (job ${r.jobId ?? 'submitted'})`);
+      else if (!r.ok) warn(`print failed: ${r.error}`);
+    }
 
     if (cfg.output.openAfterGenerate && process.stdout.isTTY) {
       execFile('open', [file], () => {});

@@ -9,6 +9,7 @@ import { fetchMarkets } from '../src/sources/markets.js';
 import { fetchNews } from '../src/sources/news.js';
 import { findChrome } from '../src/render/pdf.js';
 import { fetchCalendar } from '../src/sources/calendar.js';
+import { queues, pendingJobs } from '../src/print.js';
 import { LABEL, PLIST } from './install-agent.mjs';
 import { relAge } from '../src/lib/fmt.js';
 
@@ -67,6 +68,27 @@ async function main() {
     if (d.notice) add('warn', 'Calendar', d.notice);
     else add('ok', 'Calendar', `${d.events.length} timed + ${d.allDay.length} all-day events today`);
   } catch (err) { add('fail', 'Calendar helper', err.message); }
+
+  // --- printer --------------------------------------------------------------
+  // Print is the one step whose failure is otherwise completely invisible: no paper
+  // appears and nothing says why. Report it explicitly.
+  const pr = cfg.print ?? {};
+  if (!pr.enabled) {
+    add('warn', 'Printer', 'printing disabled in config.json');
+  } else if (!pr.printer) {
+    const names = (await queues()).map((q) => q.name);
+    add('fail', 'Printer', `print.printer is not set. Available: ${names.join(', ') || 'none'}`);
+  } else {
+    const all = await queues();
+    const q = all.find((x) => x.name === pr.printer);
+    if (!q) add('fail', 'Printer', `"${pr.printer}" not found. Available: ${all.map((x) => x.name).join(', ') || 'none'}`);
+    else if (!q.enabled) add('fail', 'Printer', `"${pr.printer}" is disabled; enable with: cupsenable ${pr.printer}`);
+    else {
+      const waiting = (await pendingJobs(pr.printer)).length;
+      add('ok', 'Printer', `${pr.printer}, ${q.state}, ${pr.media}/${pr.sides}`
+        + (waiting ? `, ${waiting} job(s) queued` : ''));
+    }
+  }
 
   // --- schedule -------------------------------------------------------------
   try {

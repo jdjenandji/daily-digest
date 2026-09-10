@@ -15,7 +15,10 @@
     "calendars": "node -e \"import('./src/config.js').then(async m=>{const c=await m.loadConfig();const {listCalendars}=await import('./src/sources/calendar.js');for(const x of await listCalendars(c))console.log(x.title+'  ('+x.source+')')})\"",
     "doctor": "node scripts/doctor.mjs",
     "agent:install": "node scripts/install-agent.mjs",
-    "agent:uninstall": "node scripts/uninstall-agent.mjs"
+    "agent:uninstall": "node scripts/uninstall-agent.mjs",
+    "printers": "node -e \"import('./src/print.js').then(async m=>{const q=await m.queues();if(!q.length)return console.log('no printers configured');for(const p of q)console.log(p.name.padEnd(28)+(p.enabled?'enabled':'DISABLED')+'  '+p.state)})\"",
+    "print:test": "node scripts/print-test.mjs",
+    "print:dry": "node scripts/print-test.mjs --dry-run"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0",

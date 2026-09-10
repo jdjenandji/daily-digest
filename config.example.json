@@ -222,5 +222,14 @@
   "schedule": {
     "hour": 6,
     "minute": 30
+  },
+  "print": {
+    "enabled": false,
+    "printer": null,
+    "media": "A4",
+    "sides": "two-sided-long-edge",
+    "colorMode": "monochrome",
+    "cancelPreviousJobs": true,
+    "extraOptions": []
   }
 }

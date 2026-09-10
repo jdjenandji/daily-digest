@@ -28,7 +28,10 @@ npm run agent:install
 |---|---|
 | `npm start` | Web UI with a Generate button, at `127.0.0.1:4174` |
 | `npm run digest` | Generate once from the terminal and exit |
-| `npm run doctor` | Health-check every source, Chrome, the calendar grant and the schedule |
+| `npm run doctor` | Health-check every source, Chrome, the calendar grant, the printer and the schedule |
+| `npm run printers` | List the printer queues on this Mac |
+| `npm run print:test` | Print the current `out/latest.pdf` |
+| `npm run print:dry` | Show the exact `lp` command without printing |
 | `npm run calendars` | List your calendar names, for the `include`/`exclude` config |
 | `npm run calendar:auth` | Grant calendar access, once, for every context |
 | `npm run agent:install` | Schedule a daily run via launchd |
@@ -87,6 +90,48 @@ npm run calendars       # see the names
 then set `calendar.include` to a list of them, or leave it `null` for all and use
 `calendar.exclude` to drop the noisy ones.
 
+## Printing every morning
+
+Set the printer once and the scheduled run puts the digest on paper by itself.
+
+```bash
+npm run printers          # copy the queue name
+```
+
+Then in `config.json` set `print.printer` to that name and `print.enabled` to `true`.
+Check it with `npm run print:test`, and `npm run doctor` will report the queue from then
+on.
+
+Adding a printer that supports AirPrint needs no driver download:
+
+```bash
+lpadmin -p Brother_HL_L2400DWE -E -v "ipp://<printer-ip>/ipp/print" -m everywhere
+```
+
+System Settings does the same thing; whatever queue name it creates is what goes in
+`config.json`.
+
+**Nothing needs scheduling.** The launchd agent from `npm run agent:install` already runs
+at 06:30, and launchd runs a missed job when the Mac next wakes, so a laptop closed
+overnight prints when you open it. No power settings are changed and no `sudo` is needed.
+
+Four things this handles that would otherwise bite:
+
+- **There is no default destination on this Mac.** A bare `lp` fails with an opaque CUPS
+  error, so the printer is named explicitly and an unset or misspelled name is reported
+  with the list of real queues rather than passed through to CUPS.
+- **Page size is sent on every job.** Queues here default to Letter and the digest is A4,
+  so trusting the queue default would silently rescale or clip the page.
+- **A disabled queue is refused, not fed.** It would accept the job and never print it.
+- **Yesterday's job is cancelled before today's is sent.** A printer switched off for a
+  week would otherwise print the whole week when it came back.
+
+A printer merely asleep is fine. CUPS queues the job and the printer wakes to take it.
+
+Printing never fails the digest. The PDF is on disk before the print step runs, so a
+printer problem is logged, shown by `doctor`, and the run still exits 0. Run
+`npm run digest --no-print` to skip it for one run.
+
 ## Calendar permissions
 
 Grant it once:
@@ -132,7 +177,8 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-A4, Courier, plain text in a single column. Every device that normally marks rank has
+Order is today's calendar, the weather, the papers, then markets. A4, Courier, plain
+text in a single column. Every device that normally marks rank has
 been removed:
 
 - **One type size.** Exactly one `font-size` declaration in the stylesheet, on `body`,

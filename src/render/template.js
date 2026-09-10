@@ -16,12 +16,12 @@ export async function renderHtml(model) {
 <div class="sheet">
 ${masthead(model, tz)}
 <section class="section">
-  <h2>Weather · ${esc(model.location.label)}</h2>
-  ${weatherBody(model, tz)}
-</section>
-<section class="section">
   <h2>Today</h2>
   ${calendarList(model, tz)}
+</section>
+<section class="section">
+  <h2>Weather · ${esc(model.location.label)}</h2>
+  ${weatherBody(model, tz)}
 </section>
 <section class="section">
   <h2>The Papers</h2>
@@ -58,15 +58,22 @@ function weatherBody(model, tz) {
     return `<p class="note">Weather unavailable: ${esc(r?.error ?? 'unknown error')}</p>`;
   }
   const { now, today, slots } = r.data;
-  const facts = [
+  // Two fixed rows rather than one flowing list. As a single row these eight readings
+  // wrapped wherever the width ran out, which stranded the first hourly reading at the
+  // end of the conditions line. Splitting them puts the break where it belongs.
+  const conditions = [
     ['Hi/Lo', `${num(today.max, 0)}°/${num(today.min, 0)}°`],
     ['Rain', today.precipChance == null ? '—' : `${num(today.precipChance, 0)}%`],
     ['Wind', `${num(now.wind, 0)}km/h`],
     ['Hum', now.humidity == null ? '—' : `${num(now.humidity, 0)}%`],
     ['Sun', `${timeIn(today.sunrise, tz)}–${timeIn(today.sunset, tz)}`],
-    null,
-    ...slots.map((s) => [`${String(s.hour).padStart(2, '0')}h`, `${num(s.temp, 0)}°`]),
   ];
+  const hourly = slots.map((s) => [`${String(s.hour).padStart(2, '0')}h`, `${num(s.temp, 0)}°`]);
+
+  const row = (facts) => (facts.length
+    ? `<dl class="facts">${facts.map((f) =>
+        `<div class="fact"><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join('')}</dl>`
+    : '');
   return `<div class="weather">
   <div class="headline-temp">
     <div>
@@ -75,10 +82,8 @@ function weatherBody(model, tz) {
       <div class="feels">feels like ${num(now.feels, 0)}° · ${esc(today.label)} later</div>
     </div>
   </div>
-  <dl class="facts">
-    ${facts.filter(Boolean).map((f) =>
-      `<div class="fact"><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join('')}
-  </dl>
+  ${row(conditions)}
+  ${row(hourly)}
 </div>`;
 }
 

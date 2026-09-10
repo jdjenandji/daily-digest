@@ -60,12 +60,12 @@ h1, h2, h3, h4, b, strong, th { font-weight: 400; font-size: inherit; margin: 0;
 .weather .cond::after { content: "  \00b7  "; white-space: pre; }
 .weather .feels { display: inline; color: var(--ink-soft); }
 
-.weather .facts { display: block; margin-top: 0.2em; }
+.weather .facts { display: block; margin: 0.2em 0 0; }
+.weather .facts + .facts { margin-top: 0; }
 .weather .fact { display: inline; white-space: nowrap; }
 .weather .fact + .fact::before { content: "   "; white-space: pre-wrap; }
 .weather .fact dt { display: inline; margin: 0; color: var(--ink-soft); }
 .weather .fact dd { display: inline; margin: 0 0 0 1ch; }
-.weather .fact:empty { display: none; }
 
 /* --------------------------- calendar + markets -------------------------- */
 
