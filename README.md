@@ -253,6 +253,15 @@ endpoint and attributed on the page, since that text is CC BY-SA. It is trimmed 
 sentences so it always ends on a full stop, and a poet with no usable article simply gets
 no note rather than costing the section.
 
+`poem.author` pins the poet. It is set to Byron, who has 324 poems in PoetryDB, 156 of
+them within the current length cap, so the rotation has plenty to draw on. When an author
+is pinned the available lengths come from that poet's own catalogue rather than the whole
+database, since asking for a length they never wrote returns a 404 rather than an empty
+list. That index is cached for a day.
+
+`poem.biographyTitle` overrides the Wikipedia lookup when the poet's catalogue name is
+not the article title, as with "George Gordon, Lord Byron" against "Lord Byron".
+
 The poem is chosen by the date, so it is the same all day and turns over at midnight
 rather than changing on every run. `poem.lineCounts` sets the lengths it draws from,
 currently 8 to 40. Those are PoetryDB's own line counts, which count verse lines and

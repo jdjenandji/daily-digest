@@ -36,16 +36,32 @@ export async function fetchPoem(cfg) {
     .filter((n) => n <= (p.maxLines ?? 14));
   if (!lengths.length) return fail(ID, new Error('poem.lineCounts and poem.maxLines leave no options'));
 
-  const wanted = lengths[hash(ymd) % lengths.length];
-  const key = `poem_${ymd}_${wanted}`;
+  // With an author pinned, the pool is that poet's work rather than everything of a
+  // given length, so the available lengths come from their own catalogue.
+  const author = (p.author ?? '').trim();
+  const available = author ? await authorLengths(author, lengths, p) : lengths;
+  if (!available.length) {
+    return fail(ID, new Error(author
+      ? `${author} has no poems within ${p.maxLines ?? 24} lines`
+      : 'no usable poem lengths'));
+  }
+
+  const wanted = available[hash(ymd) % available.length];
+  const key = `poem_${ymd}_${author || 'any'}_${wanted}`;
 
   const cached = await cache.read(key);
   if (cached?.data) return ok(ID, cached.data, { fetchedAt: cached.fetchedAt });
 
   try {
-    const pool = await getJson(`${API}/linecount/${wanted}/title,author,lines,linecount`,
+    const path = author
+      ? `author,linecount/${encodeURIComponent(author)};${wanted}`
+      : `linecount/${wanted}`;
+    const pool = await getJson(`${API}/${path}/title,author,lines,linecount`,
       { timeoutMs: p.timeoutMs ?? 8000 });
-    if (!Array.isArray(pool) || !pool.length) throw new Error(`no poems of ${wanted} lines`);
+    // PoetryDB answers a miss with {status:404} rather than an empty array.
+    if (!Array.isArray(pool) || !pool.length) {
+      throw new Error(`no ${author || 'poems'} at ${wanted} lines`);
+    }
 
     const chosen = pool[hash(`${ymd}:${wanted}`) % pool.length];
     const data = {
@@ -66,10 +82,29 @@ export async function fetchPoem(cfg) {
   } catch (err) {
     // Yesterday's poem is a perfectly good poem, unlike yesterday's calendar.
     const stale = await cache.readStale(key, 24)
-      ?? await newestCachedPoem(lengths, p.maxStaleDays ?? 7);
+      ?? await newestCachedPoem(available, p.maxStaleDays ?? 7, author || 'any');
     if (stale) return ok(ID, stale.data, { fromCache: true, fetchedAt: stale.fetchedAt });
     return fail(ID, err);
   }
+}
+
+/**
+ * Which line counts this poet actually has, intersected with the configured lengths.
+ * Cached for a day: the catalogue does not change hour to hour, and asking once beats
+ * discovering by 404 that Byron wrote nothing of exactly eighteen lines.
+ */
+async function authorLengths(author, lengths, p) {
+  const key = `poem_index_${author}`;
+  const cached = await cache.readStale(key, 24);
+  let counts = cached?.data;
+  if (!counts) {
+    const idx = await getJson(`${API}/author/${encodeURIComponent(author)}/title,linecount`,
+      { timeoutMs: p.timeoutMs ?? 8000 });
+    if (!Array.isArray(idx)) throw new Error(`no poems found for "${author}"`);
+    counts = [...new Set(idx.map((x) => Number(x.linecount)).filter(Number.isFinite))];
+    await cache.write(key, counts);
+  }
+  return lengths.filter((n) => counts.includes(n));
 }
 
 /**
@@ -83,14 +118,17 @@ export async function fetchPoem(cfg) {
 async function biography(author, p) {
   if (!author || p.biography === false) return null;
   try {
-    const slug = encodeURIComponent(author.trim().replace(/\s+/g, '_'));
+    // PoetryDB's name is not always the article title: "George Gordon, Lord Byron" is
+    // filed under "Lord Byron". biographyTitle overrides the lookup when they differ.
+    const lookup = (p.biographyTitle || author).trim();
+    const slug = encodeURIComponent(lookup.replace(/\s+/g, '_'));
     const d = await getJson(`${WIKI}/${slug}`, { timeoutMs: p.bioTimeoutMs ?? 6000, retries: 0 });
     if (d?.type && d.type !== 'standard') return null;
     const extract = (d?.extract ?? '').trim();
     if (!extract) return null;
     return {
       text: firstSentences(extract, p.bioMaxChars ?? 240),
-      title: d.title ?? author,
+      title: d.title ?? lookup,
       url: d?.content_urls?.desktop?.page ?? null,
       source: 'Wikipedia',
     };
@@ -122,12 +160,12 @@ function firstSentences(text, max) {
 }
 
 /** Fall back to any recent day's poem rather than leaving the section empty. */
-async function newestCachedPoem(lengths, days) {
+async function newestCachedPoem(lengths, days, author = 'any') {
   const now = new Date();
   for (let i = 1; i <= days; i++) {
     const ymd = new Date(now.getTime() - i * 86_400_000).toISOString().slice(0, 10);
     for (const n of lengths) {
-      const entry = await cache.read(`poem_${ymd}_${n}`);
+      const entry = await cache.read(`poem_${ymd}_${author}_${n}`);
       if (entry?.data) return entry;
     }
   }

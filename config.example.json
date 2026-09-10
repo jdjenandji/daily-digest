@@ -248,7 +248,9 @@
     "maxStaleDays": 7,
     "biography": true,
     "bioMaxChars": 240,
-    "bioTimeoutMs": 6000
+    "bioTimeoutMs": 6000,
+    "author": "George Gordon, Lord Byron",
+    "biographyTitle": "Lord Byron"
   },
   "image": {
     "label": "Mood of the day",
