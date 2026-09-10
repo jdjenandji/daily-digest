@@ -251,6 +251,7 @@
     "bioTimeoutMs": 6000
   },
   "image": {
+    "label": "Mood of the day",
     "enabled": true,
     "channel": "absolute-moods",
     "variant": "display",

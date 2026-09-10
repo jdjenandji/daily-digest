@@ -171,8 +171,9 @@ function paper(r) {
 function imageSection(model) {
   const r = model.image;
   if (!r || (r.ok && !r.data)) return '';
+  const label = model.imageLabel ?? 'Mood of the day';
   if (!r.ok) {
-    return `<section class="section"><h2>Image</h2>
+    return `<section class="section"><h2>${esc(label)}</h2>
       <p class="note">Image unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
   }
   const d = r.data;
@@ -181,7 +182,7 @@ function imageSection(model) {
   // number that decides whether page one still fits is actually the one you can edit.
   const cap = model.imageMaxHeightMm ?? 70;
   return `<section class="section image">
-  <h2>Image</h2>
+  <h2>${esc(label)}</h2>
   <img style="max-height:${cap}mm" src="${d.dataUri}" alt="${esc(d.title || 'image of the day')}">
   <p class="credit">${esc(credit)}</p>
 </section>`;

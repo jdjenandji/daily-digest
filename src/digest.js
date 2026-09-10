@@ -51,7 +51,7 @@ export async function collect(cfg) {
     { id: 'calendar', label: 'Calendar', state: calendar?.data?.notice ? 'stale' : grade(calendar) },
     { id: 'markets', label: 'Markets', state: markets?.data?.degraded ? 'stale' : grade(markets) },
     ...(poem?.data ? [{ id: 'poem', label: 'Poem', state: grade(poem) }] : []),
-    ...(image?.data ? [{ id: 'image', label: 'Image', state: grade(image) }] : []),
+    ...(image?.data ? [{ id: 'image', label: cfg.image?.label ?? 'Mood', state: grade(image) }] : []),
     // Index against the ENABLED sources, not cfg.news: a disabled paper shifts every
     // later index and would silently attach the wrong name to the wrong feed.
     ...(news ?? []).map((r, i) => ({
@@ -74,6 +74,7 @@ export async function collect(cfg) {
     poem,
     image,
     imageMaxHeightMm: cfg.image?.maxHeightMm,
+    imageLabel: cfg.image?.label,
     statuses,
     degraded: statuses.filter((s) => s.state !== 'ok'),
   };
