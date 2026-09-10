@@ -27,7 +27,7 @@ async function main() {
     }
 
     const html = await renderHtml(model);
-    const { pdf, scale, tallestMm } = await renderPdf(html, cfg);
+    const { pdf, heightMm, pages } = await renderPdf(html, cfg);
 
     await mkdir(cfg.paths.outDir, { recursive: true });
     const name = cfg.output.filename.replace('{date}', model.ymd);
@@ -37,8 +37,7 @@ async function main() {
       await writeFile(path.join(cfg.paths.outDir, 'latest.pdf'), pdf);
     }
 
-    log(`wrote ${file} (${(pdf.length / 1024).toFixed(0)} KB, ${tallestMm}mm tallest page`
-      + `${scale < 1 ? `, scaled to ${scale}` : ''})`);
+    log(`wrote ${file} (${(pdf.length / 1024).toFixed(0)} KB, ${heightMm}mm of copy, ~${pages} pages)`);
     log(`sources: ${model.statuses.filter((s) => s.state === 'ok').length}/${model.statuses.length} ok`
       + `${model.degraded.length ? `, degraded: ${model.degraded.map((d) => d.label).join(', ')}` : ''}`);
 

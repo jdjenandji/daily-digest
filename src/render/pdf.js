@@ -4,9 +4,8 @@ import path from 'node:path';
 import os from 'node:os';
 
 const MM = 3.779528;          // px per mm at 96dpi
-const PAGE_CONTENT_MM = 273;  // A4 height 297mm less 2 x 12mm margins
-const CONTENT_W_MM = 186;     // A4 width 210mm less 2 x 12mm margins
-const MIN_SCALE = 0.85;
+const PAGE_CONTENT_MM = 269;  // A4 height 297mm less 2 x 14mm margins
+const CONTENT_W_MM = 182;     // A4 width 210mm less 2 x 14mm margins
 
 let shared = null;
 
@@ -81,26 +80,23 @@ export async function renderPdf(html, cfg, { browser = null } = {}) {
     await page.emulateMediaType('print');
     await page.evaluateHandle('document.fonts.ready');
 
-    // Third layer of overflow defence, after data truncation and line clamping.
-    // Each sheet starts its own page, so the tallest sheet is what decides whether
-    // anything spills: summing them would punish a perfectly fine two-page layout.
-    const tallestPx = await page.evaluate(() =>
-      Math.max(0, ...[...document.querySelectorAll('.sheet')]
-        .map((s) => s.getBoundingClientRect().height)));
-
-    const budgetPx = PAGE_CONTENT_MM * MM;
-    let scale = 1;
-    if (tallestPx > budgetPx) {
-      // Floor at 0.85: below that, accept an extra page rather than unreadable type.
-      scale = Math.max(MIN_SCALE, Number((budgetPx / tallestPx).toFixed(3)));
-    }
+    // The document is one continuous column now, so Chrome paginates it and there is
+    // nothing to shrink to fit: the old scale-down guarded a fixed two-page layout and
+    // would only make a naturally longer digest unreadable. Measure and report instead.
+    const heightPx = await page.evaluate(() =>
+      document.documentElement.scrollHeight);
 
     const pdf = await page.pdf({
       preferCSSPageSize: true,   // never combine with `format`; they conflict
       printBackground: true,
-      scale,
     });
-    return { pdf: Buffer.from(pdf), scale, tallestMm: Math.round(tallestPx / MM) };
+    const heightMm = Math.round(heightPx / MM);
+    return {
+      pdf: Buffer.from(pdf),
+      scale: 1,
+      heightMm,
+      pages: Math.max(1, Math.ceil(heightMm / PAGE_CONTENT_MM)),
+    };
   } finally {
     await page.close().catch(() => {});
     if (own) await b.close().catch(() => {});

@@ -1,6 +1,6 @@
 # Daily Digest
 
-A one-page-per-side PDF briefing, generated on your Mac each morning: Berlin weather,
+A plain-text PDF briefing, generated on your Mac each morning: Berlin weather,
 today's calendar, five headlines from each of six papers, world market indices, and
 gold, oil and Bitcoin prices.
 
@@ -132,29 +132,35 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-A4, two pages, set entirely in Courier at **one type size**. There is exactly one
-`font-size` declaration in the stylesheet, on `body`, reading a single `--fs` variable.
-Nothing overrides it, so changing that one value rescales the whole document.
+A4, set entirely in Courier at **one type size**, text only, in a single column.
 
-With no size hierarchy available, rank comes from weight, uppercase, letter-spacing,
-rules and whitespace instead. The masthead is the same 8.4pt as the body text, just bold
-and letterspaced under a double rule. Fixed-pitch type also earns its keep in the
-markets table, where the figures column without any help.
+Three constraints hold at once, and they are the design:
 
-Page one is the masthead, a weather strip, then calendar and markets side by side. Page
-two is the six papers in two balanced columns.
+- **One size.** There is exactly one `font-size` declaration in the stylesheet, on
+  `body`, reading a single `--fs` variable. Nothing overrides it, so changing that one
+  value rescales the whole document.
+- **No rules, boxes or graphics.** No borders, no tints, no icons. The weather SVG is
+  gone. Rank is carried entirely by weight, uppercase, letter-spacing, a two-character
+  hanging indent under each heading, and blank space.
+- **One column.** Nothing sits side by side. Sections stack and the document flows
+  continuously across as many pages as it needs.
 
-Courier sets far wider than a proportional serif, which is the constraint the layout is
-tuned around. At 8.4pt with two-line standfirsts the news page ran 287mm against a
-273mm budget, so standfirsts are clamped to one line. That keeps the type at a readable
-8.4pt rather than dropping the whole document to about 7.8pt to buy the second line.
+That last point removed a whole mechanism. The old layout pinned content to two fixed
+sheets and ran a post-render fit check that shrank the page if it overran. With a single
+continuous column Chrome paginates naturally, so there is nothing to shrink to fit and
+the scale-down would only make a longer digest unreadable. The renderer now measures and
+reports the page count instead of fighting it.
 
-Overflow is defended in three layers: headlines are truncated in the data layer on a
-word boundary so layout never depends on font metrics, then line-clamped in CSS, then a
-post-render fit check shrinks the page once if it still spills, floored at 0.85.
+Line height and section spacing are tuned so a normal day lands on two pages: at the
+original spacing it ran to 573mm against a 538mm two-page budget, leaving a third sheet
+holding four lines. At the current spacing it is about 520mm. A heavy news day will
+still flow onto a third page, which is now a non-event rather than a layout failure.
 
-The page loads zero network assets. Courier New ships with macOS, and the weather icons
-are inline SVG sized in `em` so they track the single type size.
+Headlines are truncated in the data layer on a word boundary, so layout never depends on
+font metrics, then clamped to two lines in CSS with standfirsts clamped to one. At full
+column width most headlines fit on a single line.
+
+The page loads zero network assets. Courier New ships with macOS.
 
 ## Requirements
 

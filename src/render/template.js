@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { icon } from './icons.js';
 import { esc, price, pct, num, timeIn, longDate, relAge } from '../lib/fmt.js';
 
 const CSS = () => readFile(path.resolve(process.cwd(), 'src/render/styles.css'), 'utf8');
@@ -16,20 +15,18 @@ export async function renderHtml(model) {
 </head><body>
 <div class="sheet">
 ${masthead(model, tz)}
-<div class="rule-under"></div>
-${weatherBand(model, tz)}
-<div class="band">
-  <section class="section">
-    <h2>Today</h2>
-    ${calendarList(model, tz)}
-  </section>
-  <section class="section">
-    <h2>Markets</h2>
-    ${marketsTable(model, tz)}
-  </section>
-</div>
-</div>
-<div class="sheet page-break">
+<section class="section">
+  <h2>Weather · ${esc(model.location.label)}</h2>
+  ${weatherBody(model, tz)}
+</section>
+<section class="section">
+  <h2>Today</h2>
+  ${calendarList(model, tz)}
+</section>
+<section class="section">
+  <h2>Markets</h2>
+  ${marketsTable(model, tz)}
+</section>
 <section class="section">
   <h2>The Papers</h2>
   <div class="papers">${model.news.map(paper).join('\n')}</div>
@@ -54,10 +51,10 @@ function masthead(model, tz) {
 
 /* -------------------------------- weather -------------------------------- */
 
-function weatherBand(model, tz) {
+function weatherBody(model, tz) {
   const r = model.weather;
   if (!r?.ok) {
-    return section('Weather', `<p class="note">Weather unavailable: ${esc(r?.error ?? 'unknown error')}</p>`);
+    return `<p class="note">Weather unavailable: ${esc(r?.error ?? 'unknown error')}</p>`;
   }
   const { now, today, slots } = r.data;
   const facts = [
@@ -69,11 +66,8 @@ function weatherBand(model, tz) {
     null,
     ...slots.map((s) => [`${String(s.hour).padStart(2, '0')}h`, `${num(s.temp, 0)}°`]),
   ];
-  const cached = r.fromCache ? ` <span class="missing">as of ${esc(timeIn(r.fetchedAt, tz))}</span>` : '';
-
-  return section(`Weather · ${esc(model.location.label)}${cached}`, `<div class="weather">
+  return `<div class="weather">
   <div class="headline-temp">
-    ${icon(now.icon)}
     <div>
       <div class="temp">${num(now.temp, 0)}°</div>
       <div class="cond">${esc(now.label)}</div>
@@ -81,11 +75,10 @@ function weatherBand(model, tz) {
     </div>
   </div>
   <dl class="facts">
-    ${facts.map((f) => (f
-      ? `<div class="fact"><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`
-      : '<div class="fact"></div>')).join('')}
+    ${facts.filter(Boolean).map((f) =>
+      `<div class="fact"><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join('')}
   </dl>
-</div>`);
+</div>`;
 }
 
 /* -------------------------------- calendar ------------------------------- */
@@ -136,7 +129,7 @@ function marketsTable(model, tz) {
   <h3>${esc(g.label)}</h3>
   <table class="quotes"><tbody>${rows(g)}</tbody></table>
 </div>`).join('')
-    + `<div class="market-group"><h3>${esc(d.provider)} ${asOf}${note}</h3></div>`;
+    + `<div class="market-group provider"><h3>${esc(d.provider)} ${asOf}${note}</h3></div>`;
 }
 
 /* --------------------------------- news ---------------------------------- */
@@ -179,4 +172,3 @@ function footer(model, tz) {
 </div>`;
 }
 
-const section = (title, body) => `<section class="section"><h2>${title}</h2>${body}</section>`;

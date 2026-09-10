@@ -51,7 +51,7 @@ const server = http.createServer(async (req, res) => {
         const html = await renderHtml(model);
         const browser = await sharedBrowser(cfg);
         touchIdle();
-        const { pdf, scale } = await renderPdf(html, cfg, { browser });
+        const { pdf, pages } = await renderPdf(html, cfg, { browser });
 
         await mkdir(cfg.paths.outDir, { recursive: true });
         const name = cfg.output.filename.replace('{date}', model.ymd);
@@ -63,7 +63,7 @@ const server = http.createServer(async (req, res) => {
           ok: true,
           file: name,
           bytes: pdf.length,
-          scale,
+          pages,
           ms: Date.now() - started,
           statuses: model.statuses,
           generatedAt: model.generatedAt,
