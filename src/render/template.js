@@ -16,6 +16,7 @@ export async function renderHtml(model) {
 </head><body>
 <div class="sheet">
 ${masthead(model, tz)}
+<div class="rule-under"></div>
 ${weatherBand(model, tz)}
 <div class="band">
   <section class="section">
@@ -60,12 +61,13 @@ function weatherBand(model, tz) {
   }
   const { now, today, slots } = r.data;
   const facts = [
-    ['High / Low', `${num(today.max, 0)}° / ${num(today.min, 0)}°`],
+    ['Hi/Lo', `${num(today.max, 0)}°/${num(today.min, 0)}°`],
     ['Rain', today.precipChance == null ? '—' : `${num(today.precipChance, 0)}%`],
-    ['Wind', `${num(now.wind, 0)} km/h`],
-    ['Humidity', now.humidity == null ? '—' : `${num(now.humidity, 0)}%`],
-    ...slots.map((s) => [`${String(s.hour).padStart(2, '0')}:00`, `${num(s.temp, 0)}°`]),
+    ['Wind', `${num(now.wind, 0)}km/h`],
+    ['Hum', now.humidity == null ? '—' : `${num(now.humidity, 0)}%`],
     ['Sun', `${timeIn(today.sunrise, tz)}–${timeIn(today.sunset, tz)}`],
+    null,
+    ...slots.map((s) => [`${String(s.hour).padStart(2, '0')}h`, `${num(s.temp, 0)}°`]),
   ];
   const cached = r.fromCache ? ` <span class="missing">as of ${esc(timeIn(r.fetchedAt, tz))}</span>` : '';
 
@@ -79,7 +81,9 @@ function weatherBand(model, tz) {
     </div>
   </div>
   <dl class="facts">
-    ${facts.map(([k, v]) => `<div class="fact"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}
+    ${facts.map((f) => (f
+      ? `<div class="fact"><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`
+      : '<div class="fact"></div>')).join('')}
   </dl>
 </div>`);
 }

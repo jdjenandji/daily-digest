@@ -132,16 +132,29 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-A4, two pages. Page one is the masthead, a weather strip, then calendar and markets side
-by side. Page two is the six papers in two balanced columns.
+A4, two pages, set entirely in Courier at **one type size**. There is exactly one
+`font-size` declaration in the stylesheet, on `body`, reading a single `--fs` variable.
+Nothing overrides it, so changing that one value rescales the whole document.
+
+With no size hierarchy available, rank comes from weight, uppercase, letter-spacing,
+rules and whitespace instead. The masthead is the same 8.4pt as the body text, just bold
+and letterspaced under a double rule. Fixed-pitch type also earns its keep in the
+markets table, where the figures column without any help.
+
+Page one is the masthead, a weather strip, then calendar and markets side by side. Page
+two is the six papers in two balanced columns.
+
+Courier sets far wider than a proportional serif, which is the constraint the layout is
+tuned around. At 8.4pt with two-line standfirsts the news page ran 287mm against a
+273mm budget, so standfirsts are clamped to one line. That keeps the type at a readable
+8.4pt rather than dropping the whole document to about 7.8pt to buy the second line.
 
 Overflow is defended in three layers: headlines are truncated in the data layer on a
 word boundary so layout never depends on font metrics, then line-clamped in CSS, then a
-post-render fit check shrinks the page once if it still spills, floored at 0.85 rather
-than shipping unreadable type.
+post-render fit check shrinks the page once if it still spills, floored at 0.85.
 
-The page loads zero network assets. System fonts only, and weather icons are inline SVG.
-An asset load race is the most common cause of a blank PDF.
+The page loads zero network assets. Courier New ships with macOS, and the weather icons
+are inline SVG sized in `em` so they track the single type size.
 
 ## Requirements
 
