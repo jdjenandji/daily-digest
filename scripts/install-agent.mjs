@@ -78,8 +78,9 @@ async function main() {
   console.log(`  launchctl kickstart -k gui/${uid}/${LABEL}`);
   console.log('');
   console.log('The scheduled job runs with --no-prompt, so it can never raise a permission');
-  console.log('dialog. If the calendar section says access is not granted, run that kickstart');
-  console.log('once while logged in and answer the prompt.');
+  console.log('dialog, and therefore cannot request calendar access on its own. Grant it once:');
+  console.log('');
+  console.log('  npm run calendar:auth:scheduled');
 }
 
 // Only install when run directly. uninstall-agent.mjs imports LABEL and PLIST from

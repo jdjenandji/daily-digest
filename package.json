@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "A daily PDF briefing: Berlin weather, calendar, six papers, world markets.",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "digest": "node src/cli.js",
@@ -13,7 +15,8 @@
     "calendars": "node scripts/build-native.mjs && ./native/bin/calendar-bridge --list-calendars",
     "doctor": "node scripts/doctor.mjs",
     "agent:install": "node scripts/install-agent.mjs",
-    "agent:uninstall": "node scripts/uninstall-agent.mjs"
+    "agent:uninstall": "node scripts/uninstall-agent.mjs",
+    "calendar:auth:scheduled": "node scripts/grant-scheduled-access.mjs"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0",
