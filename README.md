@@ -248,7 +248,10 @@ taking the document to five pages. Four leaves 44mm of headroom, which absorbs t
 day-to-day variation in headline length. A source can override the count with its own
 `limit`, as Artnet does.
 
-Announcements are titles only. e-flux publishes no feed, both documented RSS paths
+Each announcement prints its institution ahead of the title. The two are read as a pair
+from the same block in the markup rather than collected separately, so a venue can never
+be attached to the wrong exhibition. It also rescues titles that say nothing alone, like
+"Issue 165" or "Fall programme". e-flux publishes no feed, both documented RSS paths
 return 404, so this parses their listing page. Their robots.txt permits that path for
 general agents while blocking named training crawlers. Parsing markup is the most
 fragile thing in this project, so the section degrades to a labelled gap on a layout

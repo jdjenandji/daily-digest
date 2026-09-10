@@ -44,21 +44,29 @@ export async function fetchAnnouncements(cfg) {
 }
 
 /**
- * Titles live in a cell-title container. An inner class covers only some of them, so
- * the outer one is used: it caught all fifteen on the sampled page where the inner
- * caught eight.
+ * Each announcement is a content block holding the institution and then the title.
+ * They are read as a pair rather than separately, so a venue can never be attached to
+ * the wrong exhibition. The pairing also rescues titles that say nothing alone, like
+ * "Issue 165" or "Fall programme".
+ *
+ * The outer cell-title container is used rather than the inner announcement-title
+ * class: the inner one covered eight of the fifteen on the sampled page.
  */
 function parse(html, limit) {
-  const cells = [...html.matchAll(/<div class="featured-projects__cell-title">(.*?)<\/div>\s*<\/div>/gs)]
-    .map((m) => m[1]);
+  const blocks = [...html.matchAll(
+    /<div class="featured-projects__cell-content">(.*?)<div class="featured-projects__cell-title">(.*?)<\/div>\s*<\/div>/gs)];
 
   const seen = new Set();
   const out = [];
-  for (const cell of cells) {
-    const title = clean(cell);
+  for (const [, head, titleFrag] of blocks) {
+    const title = clean(titleFrag);
     if (!title || seen.has(title)) continue;
     seen.add(title);
-    out.push({ title: clip(title, 88) });
+    const venueMatch = head.match(/<div class="featured-projects__cell-client">(.*?)<\/div>/s);
+    out.push({
+      venue: venueMatch ? clip(clean(venueMatch[1]), 40) : '',
+      title: clip(title, 76),
+    });
     if (out.length >= limit) break;
   }
   return out;

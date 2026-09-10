@@ -200,7 +200,9 @@ function announcementsSection(model) {
       <p class="note">Announcements unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
   }
   const d = r.data;
-  const rows = d.items.map((i) => `<p class="ann">${esc(i.title)}</p>`).join('');
+  // Venue in grey ahead of the title, so the eye can still scan the exhibitions.
+  const rows = d.items.map((i) => `<p class="ann">${
+    i.venue ? `<span class="venue">${esc(i.venue)}</span>` : ''}${esc(i.title)}</p>`).join('');
   return `<section class="section announcements">
   <h2>${esc(label)}</h2>
   ${rows}

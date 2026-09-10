@@ -130,7 +130,9 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 
 /* ----------------------------- announcements ----------------------------- */
 
-.announcements .ann { margin: 0 0 0.24em; }
+.announcements .ann { margin: 0 0 0.24em; padding-left: 3ch; text-indent: -3ch; }
+.announcements .venue { color: var(--ink-soft); }
+.announcements .venue::after { content: "  \00b7  "; white-space: pre; }
 .announcements .credit { margin: 0.6em 0 0; color: var(--ink-faint); }
 
 /* --------------------------------- poem ---------------------------------- */
