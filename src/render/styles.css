@@ -115,6 +115,19 @@ table.quotes .chg  { width: 11ch; text-align: right; }
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+/* --------------------------------- image --------------------------------- */
+
+/* Bounded in both directions so it cannot push the markets table onto page two.
+   The height cap is what actually binds; width follows to keep the aspect ratio. */
+.image img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin-left: 3ch;
+}
+.image .credit { margin: 0.25em 0 0 3ch; color: var(--ink-faint); }
+
 /* --------------------------------- poem ---------------------------------- */
 
 /* Fixed structure: page 1 is the day itself, page 2 the headlines, page 3 the poem.

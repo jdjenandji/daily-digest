@@ -27,6 +27,7 @@ ${masthead(model, tz)}
   <h2>Markets</h2>
   ${marketsTable(model, tz)}
 </section>
+${imageSection(model)}
 <section class="section papers-page">
   <h2>The Papers</h2>
   <div class="papers">${model.news.map(paper).join('\n')}</div>
@@ -163,6 +164,27 @@ function paper(r) {
   <h3><span>${esc(name)}</span><span class="age">${esc(label)}</span></h3>
   ${stories}
 </article>`;
+}
+
+/* --------------------------------- image --------------------------------- */
+
+function imageSection(model) {
+  const r = model.image;
+  if (!r || (r.ok && !r.data)) return '';
+  if (!r.ok) {
+    return `<section class="section"><h2>Image</h2>
+      <p class="note">Image unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
+  }
+  const d = r.data;
+  const credit = [d.channel, d.owner].filter(Boolean).join(' · ');
+  // The cap lives in config and is applied here, not in the stylesheet, so the one
+  // number that decides whether page one still fits is actually the one you can edit.
+  const cap = model.imageMaxHeightMm ?? 70;
+  return `<section class="section image">
+  <h2>Image</h2>
+  <img style="max-height:${cap}mm" src="${d.dataUri}" alt="${esc(d.title || 'image of the day')}">
+  <p class="credit">${esc(credit)}</p>
+</section>`;
 }
 
 /* --------------------------------- poem ---------------------------------- */

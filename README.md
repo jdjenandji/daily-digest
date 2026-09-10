@@ -48,6 +48,7 @@ npm run agent:install
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
 | Poem | PoetryDB, public-domain poets only |
 | Poet biography | Wikipedia REST summary |
+| Image | Are.na public channel API |
 
 Three of these needed more than the obvious endpoint:
 
@@ -198,7 +199,7 @@ rather than an empty section that would read as "no meetings today".
 ## Layout notes
 
 The document has a fixed three-page structure: page one is the day itself (calendar,
-weather, markets), page two the headlines, page three the poem. The two later sections
+weather, markets, image), page two the headlines, page three the poem. The two later sections
 each force a page break rather than starting in whatever gap the section above leaves. A4, Courier, plain
 text in a single column. Every device that normally marks rank has
 been removed:
@@ -232,6 +233,13 @@ Each page has 269mm of usable height. A typical day measures about 167mm on page
 250mm on page two and 260mm on page three, so the structure holds with room on the first
 two. Page three is the tight one: at the top of the poem-length range it is close to
 full, and a longer poem than the current cap allows would spill onto a fourth page.
+
+Three pages is a tight budget once an image is on page one, and two settings pay for it:
+`image.maxHeightMm` and `poem.maxLines`. They trade against each other. Measured on a
+normal day, a 50mm image holds three pages with poems up to 24 lines, and a 60mm image
+needs poems capped at 20. Raising either past that adds a fourth page. The image is
+inlined as a data URI rather than linked, so the page still loads no network assets when
+Chrome renders it.
 
 A news source can be switched off with `"enabled": false` in its config entry rather than
 deleted, so its URL and per-paper quirks survive and turning it back on is a one-word

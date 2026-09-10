@@ -235,23 +235,29 @@
   },
   "poem": {
     "enabled": true,
-    "maxLines": 40,
+    "maxLines": 24,
     "lineCounts": [
       8,
       12,
       14,
       16,
       20,
-      24,
-      28,
-      32,
-      36,
-      40
+      24
     ],
     "timeoutMs": 8000,
     "maxStaleDays": 7,
     "biography": true,
     "bioMaxChars": 240,
     "bioTimeoutMs": 6000
+  },
+  "image": {
+    "enabled": true,
+    "channel": "absolute-moods",
+    "variant": "display",
+    "maxKb": 400,
+    "maxHeightMm": 50,
+    "timeoutMs": 8000,
+    "downloadTimeoutMs": 15000,
+    "maxStaleDays": 7
   }
 }
