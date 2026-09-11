@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { esc, price, pct, num, timeIn, longDate } from '../lib/fmt.js';
+import figlet from 'figlet';
+import { esc, price, pct, num, timeIn } from '../lib/fmt.js';
 
 const CSS = () => readFile(path.resolve(process.cwd(), 'src/render/styles.css'), 'utf8');
 
@@ -40,15 +41,37 @@ ${footer(model, tz)}
 /* ------------------------------- masthead -------------------------------- */
 
 function masthead(model, tz) {
-  // One plain line. With no heading styling left, a stacked masthead would just be
-  // two undifferentiated lines of text.
-  const parts = [
-    'Daily Digest',
-    longDate(new Date(model.generatedAt), tz),
-    model.location.label,
-    `generated ${timeIn(model.generatedAt, tz)}`,
-  ];
-  return `<header class="masthead">${esc(parts.join(' \u00b7 '))}</header>`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, month: 'long', day: 'numeric', year: 'numeric',
+  }).formatToParts(new Date(model.generatedAt));
+  const value = (type) => parts.find((part) => part.type === type)?.value ?? '';
+  const banner = (title) => {
+    const lines = figlet.textSync(title, {
+      font: 'Big Money-nw',
+      width: 1000,
+      whitespaceBreak: false,
+    }).split('\n');
+
+    // FIGlet pads this font with blank rows. Remove only those rows, preserving the
+    // spaces that make up the banner itself.
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines.at(-1).trim()) lines.pop();
+    return {
+      title,
+      art: lines.join('\n'),
+      columns: Math.max(...lines.map((line) => line.length)),
+    };
+  };
+
+  const month = value('month').toUpperCase();
+  const suffix = `${value('day')} ${value('year')}`;
+  let heading = banner(`${month} ${suffix}`);
+  if (heading.columns > 79 && month === 'SEPTEMBER') heading = banner(`SEPT ${suffix}`);
+  const scale = Math.min(1, 78 / heading.columns);
+
+  return `<header class="masthead" aria-label="${esc(heading.title)}">
+  <pre class="ascii-title" style="--ascii-scale:${scale.toFixed(4)}">${esc(heading.art)}</pre>
+</header>`;
 }
 
 /* -------------------------------- weather -------------------------------- */

@@ -37,7 +37,19 @@ h1, h2, h3, h4, b, strong, th { font-weight: 400; font-size: inherit; margin: 0;
 
 /* -------------------------------- masthead ------------------------------- */
 
-.masthead { margin-bottom: 1.6em; }
+.masthead { margin-bottom: 1.6em; overflow: hidden; }
+.ascii-title {
+  margin: 0;
+  width: calc(100% / var(--ascii-scale));
+  font-family: var(--mono);
+  font-size: var(--fs);
+  font-weight: 400;
+  line-height: 0.88;
+  letter-spacing: 0;
+  white-space: pre;
+  transform: scaleX(var(--ascii-scale));
+  transform-origin: top left;
+}
 
 /* -------------------------------- sections ------------------------------- */
 
