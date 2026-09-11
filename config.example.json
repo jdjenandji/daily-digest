@@ -97,7 +97,6 @@
       {
         "label": "Europe",
         "symbols": [
-          "sx5e",
           "dax",
           "ftse",
           "cac"
@@ -107,23 +106,36 @@
         "label": "Asia",
         "symbols": [
           "n225",
-          "hsi",
-          "ssec",
-          "nifty"
+          "hsi"
         ]
       },
       {
         "label": "Commodities",
         "symbols": [
           "gold",
-          "wti",
-          "brent"
+          "wti"
         ]
       },
       {
         "label": "Crypto",
         "symbols": [
           "btc"
+        ]
+      },
+      {
+        "label": "Stocks",
+        "columns": 2,
+        "symbols": [
+          "sp500acc",
+          "ftseallworld",
+          "physicalgold",
+          "alphabet",
+          "mscieuhighdiv",
+          "bloom",
+          "creditagricole",
+          "airbus",
+          "robinhood",
+          "goldmansachs"
         ]
       }
     ],
@@ -142,11 +154,6 @@
         "name": "Nasdaq Composite",
         "cnbc": ".IXIC",
         "yahoo": "^IXIC"
-      },
-      "sx5e": {
-        "name": "Euro Stoxx 50",
-        "cnbc": ".STOXX50E",
-        "yahoo": "^STOXX50E"
       },
       "dax": {
         "name": "DAX",
@@ -173,16 +180,6 @@
         "cnbc": ".HSI",
         "yahoo": "^HSI"
       },
-      "ssec": {
-        "name": "Shanghai Composite",
-        "cnbc": ".SSEC",
-        "yahoo": "000001.SS"
-      },
-      "nifty": {
-        "name": "Nifty 50",
-        "cnbc": ".NSEI",
-        "yahoo": "^NSEI"
-      },
       "gold": {
         "name": "Gold",
         "cnbc": "@GC.1",
@@ -195,18 +192,79 @@
         "yahoo": "CL=F",
         "digits": 2
       },
-      "brent": {
-        "name": "Oil (Brent)",
-        "cnbc": "@LCO.1",
-        "yahoo": "BZ=F",
-        "digits": 2
-      },
       "btc": {
         "name": "Bitcoin",
         "cnbc": "BTC.CM=",
         "yahoo": "BTC-USD"
+      },
+      "sp500acc": {
+        "name": "S&P 500 EUR Acc",
+        "cnbc": "SPYL-DE",
+        "yahoo": "SPYL.DE",
+        "digits": 2
+      },
+      "ftseallworld": {
+        "name": "FTSE All-World Acc",
+        "cnbc": "VWCE-DE",
+        "yahoo": "VWCE.DE",
+        "digits": 2
+      },
+      "physicalgold": {
+        "name": "Physical Gold Acc",
+        "cnbc": "PPFB-DE",
+        "yahoo": "PPFB.DE",
+        "digits": 2
+      },
+      "alphabet": {
+        "name": "Alphabet A",
+        "cnbc": "GOOGL",
+        "yahoo": "GOOGL",
+        "digits": 2
+      },
+      "mscieuhighdiv": {
+        "name": "MSCI Europe Div",
+        "yahoo": "EHF1.DE",
+        "digits": 2
+      },
+      "bloom": {
+        "name": "Bloom Energy",
+        "cnbc": "BE",
+        "yahoo": "BE",
+        "digits": 2
+      },
+      "creditagricole": {
+        "name": "Crédit Agricole",
+        "cnbc": "ACA-FR",
+        "yahoo": "ACA.PA",
+        "digits": 2
+      },
+      "airbus": {
+        "name": "Airbus",
+        "cnbc": "AIR-FR",
+        "yahoo": "AIR.PA",
+        "digits": 2
+      },
+      "robinhood": {
+        "name": "Robinhood A",
+        "cnbc": "HOOD",
+        "yahoo": "HOOD",
+        "digits": 2
+      },
+      "goldmansachs": {
+        "name": "Goldman Sachs",
+        "cnbc": "GS",
+        "yahoo": "GS",
+        "digits": 2
       }
     }
+  },
+  "predictions": {
+    "enabled": true,
+    "endpoint": "https://gamma-api.polymarket.com/markets",
+    "limit": 3,
+    "freshMinutes": 15,
+    "timeoutMs": 8000,
+    "maxStaleHours": 24
   },
   "timeouts": {
     "weatherMs": 5000,
@@ -243,27 +301,15 @@
   },
   "poem": {
     "enabled": true,
-    "maxLines": 24,
-    "lineCounts": [
-      8,
-      12,
-      14,
-      16,
-      20,
-      24
-    ],
+    "endpoint": "https://api.parse.bot/scraper/18773879-45ca-4c85-a458-3e9c4a4d59ca/get_poem_of_the_day",
+    "apiKey": null,
     "timeoutMs": 8000,
-    "maxStaleDays": 7,
-    "biography": true,
-    "bioMaxChars": 240,
-    "bioTimeoutMs": 6000,
-    "author": "George Gordon, Lord Byron",
-    "biographyTitle": "Lord Byron"
+    "maxStaleDays": 7
   },
-  "image": {
-    "label": "Mood of the day",
+  "meme": {
+    "label": "Meme of the day",
     "enabled": true,
-    "channel": "absolute-moods",
+    "channel": "sacred-memes",
     "variant": "display",
     "maxKb": 400,
     "maxHeightMm": 50,

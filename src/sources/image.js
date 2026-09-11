@@ -17,16 +17,17 @@ const PER_PAGE = 100;
  *
  * Like the poem, the choice is keyed to the date, so it is stable all day.
  */
-export async function fetchImage(cfg) {
-  const c = cfg.image ?? {};
-  if (!c.enabled) return ok(ID, null);
-  if (!c.channel) return fail(ID, new Error('image.channel is not set in config.json'));
+export async function fetchImage(cfg, configKey = 'image', { refresh = false, seed = null } = {}) {
+  const c = cfg[configKey] ?? {};
+  const id = configKey === 'image' ? ID : configKey;
+  if (!c.enabled) return ok(id, null);
+  if (!c.channel) return fail(id, new Error(`${configKey}.channel is not set in config.json`));
 
   const { ymd } = dayBounds(cfg.location.timezone);
   const key = `image_${c.channel}_${ymd}`;
 
   const cached = await cache.read(key);
-  if (cached?.data) return ok(ID, cached.data, { fetchedAt: cached.fetchedAt });
+  if (cached?.data && !refresh) return ok(id, cached.data, { fetchedAt: cached.fetchedAt });
 
   try {
     // One small request for the channel's size, then one page of it. Pulling all 2000+
@@ -35,15 +36,22 @@ export async function fetchImage(cfg) {
     const total = head?.length ?? 0;
     if (!total) throw new Error('channel is empty or unavailable');
 
+    // A normal run is stable for the day. An explicit refresh uses a new seed and
+    // avoids the current block when it happens to land on the same channel page.
+    const choiceSeed = refresh ? `${ymd}:${seed ?? Date.now()}` : ymd;
     const pages = Math.max(1, Math.ceil(total / PER_PAGE));
-    const page = (hash(ymd) % pages) + 1;
+    const page = (hash(choiceSeed) % pages) + 1;
     const body = await getJson(`${API}/${c.channel}/contents?per=${PER_PAGE}&page=${page}`,
       { timeoutMs: c.timeoutMs ?? 8000 });
 
     const images = (body?.contents ?? []).filter((b) => b?.class === 'Image' && b?.image);
     if (!images.length) throw new Error(`no images on page ${page} of the channel`);
 
-    const block = images[hash(`${ymd}:${page}`) % images.length];
+    const alternatives = refresh && cached?.data?.link
+      ? images.filter((block) => `https://www.are.na/block/${block.id}` !== cached.data.link)
+      : images;
+    const pool = alternatives.length ? alternatives : images;
+    const block = pool[hash(`${choiceSeed}:${page}`) % pool.length];
     const variant = block.image[c.variant ?? 'display'] ?? block.image.display ?? block.image.large;
     if (!variant?.url) throw new Error('image block carried no usable URL');
 
@@ -62,12 +70,12 @@ export async function fetchImage(cfg) {
     };
 
     await cache.write(key, data);
-    return ok(ID, data);
+    return ok(id, data);
   } catch (err) {
     // An older image is still a fine image, so fall back rather than leaving a gap.
-    const stale = await recentCached(c.channel, c.maxStaleDays ?? 7);
-    if (stale) return ok(ID, stale.data, { fromCache: true, fetchedAt: stale.fetchedAt });
-    return fail(ID, err);
+    const stale = cached ?? await recentCached(c.channel, c.maxStaleDays ?? 7);
+    if (stale) return ok(id, stale.data, { fromCache: true, fetchedAt: stale.fetchedAt });
+    return fail(id, err);
   }
 }
 

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { loadConfig } from '../src/config.js';
 import { fetchWeather } from '../src/sources/weather.js';
 import { fetchMarkets } from '../src/sources/markets.js';
+import { fetchPredictions } from '../src/sources/predictions.js';
 import { fetchNews } from '../src/sources/news.js';
 import { findChrome } from '../src/render/pdf.js';
 import { fetchCalendar } from '../src/sources/calendar.js';
@@ -54,6 +55,13 @@ async function main() {
       `${m.data.live}/${m.data.total} instruments${missing.length ? ` — missing: ${missing.join(', ')}` : ''}`);
   }
 
+  // --- predictions ---------------------------------------------------------
+  const predictions = await fetchPredictions(cfg);
+  if (!predictions.ok) add('fail', 'Predictions', predictions.error);
+  else if (!predictions.data) add('warn', 'Predictions', 'disabled or empty');
+  else add(predictions.fromCache ? 'warn' : 'ok', 'Predictions',
+    `${predictions.data.items.length} top markets from Polymarket${predictions.fromCache ? ' (cached)' : ''}`);
+
   // --- chrome ---------------------------------------------------------------
   try {
     const chrome = await findChrome(cfg);
@@ -92,7 +100,7 @@ async function main() {
     else if (!r.data) add('warn', 'Poem', 'no poem selected');
     else add(r.fromCache ? 'warn' : 'ok', 'Poem',
       `${r.data.lines.length} lines, ${r.data.author}`
-      + `, bio ${r.data.bio ? `from ${r.data.bio.source}` : 'unavailable'}`
+      + `, ${r.data.source}`
       + `${r.fromCache ? ' (from an earlier day)' : ''}`);
   }
 

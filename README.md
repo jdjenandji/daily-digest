@@ -4,7 +4,8 @@ A plain-text PDF briefing, generated on your Mac each morning: Berlin weather,
 today's calendar, five headlines from each of six papers, world market indices, and
 gold, oil and Bitcoin prices.
 
-No API keys. No accounts. Every source is public.
+The poem source requires a Parse.bot API key; the other sources are public and need no
+account.
 
 ## Quick start
 
@@ -46,9 +47,9 @@ npm run agent:install
 | Calendar | macOS Calendar, via a small Swift EventKit helper app |
 | News | WSJ, FT, NYTimes, Reuters, Le Monde — headlines only (Bild configured but off) |
 | Markets | CNBC, with Yahoo Finance as a per-instrument fallback |
-| Poem | PoetryDB, public-domain poets only |
-| Poet biography | Wikipedia REST summary |
-| Image | Are.na public channel API |
+| Predictions | Polymarket Gamma API, top three open markets by 24-hour volume |
+| Poem | Poetry Foundation Poem of the Day, via Parse.bot |
+| Meme of the day | Are.na `sacred-memes` channel |
 | Announcements | e-flux listing page, titles only |
 | Art news | Artnet News RSS, headlines only |
 
@@ -60,27 +61,23 @@ Three of these needed more than the obvious endpoint:
 - **Reuters** retired every public RSS feed and returns 401 to non-browser clients. The
   digest reads their Google News sitemap instead, which is the freshest source of the
   six.
-- **The poem does not come from the Poetry Foundation**, which was the original ask.
-  Every endpoint there sits behind a Cloudflare bot challenge that returns 403 to any
-  non-browser client, and getting past that means defeating bot detection. Their Poem of
-  the Day also rotates contemporary work that is still in copyright, so reprinting it in
-  full every morning would not be right regardless. PoetryDB is an open API built to be
-  consumed programmatically and carries only public-domain poets, so the full text can be
-  printed freely.
+- **The Poetry Foundation poem** comes through a Parse.bot scraper because the
+  Foundation site itself does not expose a dependable machine-readable endpoint. The
+  response includes the title, author, full text, translator and publication credit.
 
 ## How it behaves when something breaks
 
 The PDF is always produced. There is no all-or-nothing path.
 
 - A source that fails renders as a labelled gap, and the other sections are untouched.
-- A source that succeeds but returns old data is graded **stale** and prints its age in
-  red. This matters more than error handling: a frozen feed returns a perfectly healthy
-  HTTP 200, so age is the only real check.
+- A source that succeeds but returns old data is graded **stale** and prints its
+  `as of` timestamp in red. This matters more than error handling: a frozen feed returns
+  a perfectly healthy HTTP 200, so the timestamp is the only real check.
 - Weather, markets and news fall back to a cached copy when the upstream is down, and
   anything served from cache is stamped with when it was fetched.
 - The calendar never falls back to a previous day. Yesterday's meetings are worse than
   nothing.
-- A status strip along the footer reports every source as ok, stale, cached or failed.
+- Source health remains available in the command output and through `npm run doctor`.
 
 `npm run doctor` reports the same picture on demand, plus Chrome, the calendar
 permission, and whether the scheduled job has actually been running.
@@ -91,8 +88,20 @@ Edit `config.json`, created from `config.example.json` on first run. It holds th
 location and time zone, calendar include/exclude lists, the six feed URLs, the market
 instruments, per-source timeouts, cache windows, and the schedule time.
 
+Set `poem.apiKey` to the Parse.bot key in this local file. `config.json` is gitignored,
+and `config.example.json` intentionally contains `null`. For an interactive run you can
+instead set `PARSE_BOT_API_KEY` in the environment; the config value is more convenient
+for the launchd schedule because it runs with a minimal environment.
+
 Feeds and market instruments live in config on purpose: they are the things most likely
 to break, and both should be fixable by editing JSON rather than code.
+
+The `Stocks` market group contains the ten portfolio holdings and uses `"columns": 2`
+to render five live quotes in each column above the broader market groups.
+
+`Predictions` shows Polymarket's three most-traded active, unresolved markets over the
+previous 24 hours side by side, with the Yes probability above each question. It
+refreshes every 15 minutes and falls back to its latest cached result for up to a day.
 
 To limit which calendars appear:
 
@@ -200,11 +209,12 @@ rather than an empty section that would read as "no meetings today".
 
 ## Layout notes
 
-The document has a fixed four-page structure: page one is the day itself (calendar,
-weather, markets, image), page two the newspaper headlines, page three the art
-page (exhibition announcements plus Artnet News), page four the poem. The two later sections
-each force a page break rather than starting in whatever gap the section above leaves. A4, Courier, plain
-text in a single column. Every device that normally marks rank has
+The document has a four-section page structure: page one is the day itself (calendar,
+weather, markets), page two the newspaper headlines, page three the art page
+(Artnet News followed by e-flux announcements), and page four begins the poem. A long daily
+poem can continue onto later pages. The two later sections each force a page break rather
+than starting in whatever gap the section above leaves. A4, Courier, plain text in a
+single column. Every device that normally marks rank has
 been removed:
 
 - **One type size.** Exactly one `font-size` declaration in the stylesheet, on `body`,
@@ -221,8 +231,7 @@ under their name. Grey pushes supporting text back: standfirsts, labels, timesta
 Colour appears in only two places, on the sign of a market change and on a warning.
 
 That last point is load-bearing. With no bold left, a frozen feed is flagged by colour
-alone, so the stale marker and the footer status letters have to carry it: `+` for a
-live source, `~` cached, `!` stale, `x` failed.
+in its own section heading.
 
 Removing the fixed two-page layout removed a mechanism with it. The renderer used to run
 a post-render fit check that scaled the page down when content overran. A single
@@ -232,15 +241,14 @@ flow and reports a page count instead.
 
 Order is weather, today's calendar, the papers, then markets last.
 
-Each page has 269mm of usable height. A typical day measures about 167mm on page one,
-250mm on page two and 260mm on page three, so the structure holds with room on the first
-two. Page three is the tight one: at the top of the poem-length range it is close to
-full, and a longer poem than the current cap allows would spill onto a fourth page.
+Each page has 269mm of usable height. The poem is not truncated to fit a fixed page
+budget: individual verse lines stay together, and the verse can flow onto another page.
 
 A news source carries an optional `page` field deciding which page it prints on:
-`papers` by default, or `art` to join the announcements. Artnet News is on the art page
-rather than with the newspapers, because page two was already close to full and the
-subject matter belongs together.
+`papers` by default, or `art` to join the announcements. Artnet News appears first on the
+art page, followed by the e-flux announcements. It lives there rather than with the
+newspapers because page two was already close to full and the subject matter belongs
+together.
 
 Headlines per paper is four rather than five. At five the papers page measured 270mm
 against a 269mm limit on a day of long headlines and spilled onto a page of its own,
@@ -258,12 +266,10 @@ fragile thing in this project, so the section degrades to a labelled gap on a la
 change and `doctor` reports the title count, since a silent drop to zero would otherwise
 look like a quiet day rather than a break.
 
-Three pages was a tight budget once an image was on page one, and two settings pay for it:
-`image.maxHeightMm` and `poem.maxLines`. They trade against each other. Measured on a
-normal day, a 50mm image holds three pages with poems up to 24 lines, and a 60mm image
-needs poems capped at 20. Raising either past that adds a fourth page. The image is
-inlined as a data URI rather than linked, so the page still loads no network assets when
-Chrome renders it.
+The daily meme comes from Are.na's `sacred-memes` channel and appears without a heading
+or credit immediately below the poem, aligned with the page's left edge. It is capped by
+`meme.maxHeightMm` and inlined as a data URI, so Chrome needs no network access while
+rendering the PDF.
 
 A news source can be switched off with `"enabled": false` in its config entry rather than
 deleted, so its URL and per-paper quirks survive and turning it back on is a one-word
@@ -272,25 +278,10 @@ edit. Bild is off.
 The poem starts its own page. It is a change of register from the briefing, and a long
 one would otherwise begin in whatever gap the markets table happened to leave.
 
-Under the title sits a one-sentence note on the poet, taken from Wikipedia's summary
-endpoint and attributed on the page, since that text is CC BY-SA. It is trimmed to whole
-sentences so it always ends on a full stop, and a poet with no usable article simply gets
-no note rather than costing the section.
-
-`poem.author` pins the poet. It is set to Byron, who has 324 poems in PoetryDB, 156 of
-them within the current length cap, so the rotation has plenty to draw on. When an author
-is pinned the available lengths come from that poet's own catalogue rather than the whole
-database, since asking for a length they never wrote returns a 404 rather than an empty
-list. That index is cached for a day.
-
-`poem.biographyTitle` overrides the Wikipedia lookup when the poet's catalogue name is
-not the article title, as with "George Gordon, Lord Byron" against "Lord Byron".
-
-The poem is chosen by the date, so it is the same all day and turns over at midnight
-rather than changing on every run. `poem.lineCounts` sets the lengths it draws from,
-currently 8 to 40. Those are PoetryDB's own line counts, which count verse lines and
-exclude the blank lines used for stanza breaks, so a 40-line poem renders somewhat
-taller than 40 lines.
+The API's daily poem is cached under the local date, so repeated generation does not
+repeat the scraper request. If the endpoint is unavailable, the newest cached poem from
+the previous `poem.maxStaleDays` is used. Translator, epigraph, editor note, and copyright
+credit are rendered when the response supplies them.
 
 News is headlines only. Standfirsts are not rendered, not stored and not parsed: the
 adapters no longer extract them at all. Bild's "Kicker - Headline" titles are still

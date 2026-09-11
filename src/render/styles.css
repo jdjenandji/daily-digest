@@ -92,19 +92,43 @@ table.quotes td { padding: 0; border: 0; white-space: nowrap; vertical-align: ba
 table.quotes .name { width: 26ch; }
 table.quotes .last { width: 12ch; text-align: right; }
 table.quotes .chg  { width: 11ch; text-align: right; }
+.market-group.two-column .quote-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3ch;
+  margin-left: 3ch;
+}
+.market-group.two-column table.quotes { width: 100%; margin-left: 0; table-layout: fixed; }
+.market-group.two-column table.quotes .name { width: auto; overflow: hidden; text-overflow: ellipsis; }
+.market-group.two-column table.quotes .last { width: 9ch; }
+.market-group.two-column table.quotes .chg { width: 9ch; }
+.stocks-section .market-group.two-column .quote-columns { margin-left: 0; }
 .up { color: var(--up); }
 .down { color: var(--down); }
 .flat, .missing { color: var(--ink-soft); }
+
+/* ------------------------------ predictions ------------------------------ */
+
+.predictions .prediction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4ch;
+}
+.predictions .prediction {
+  min-width: 0;
+  break-inside: avoid;
+}
+.predictions .probability { margin-bottom: 0.24em; color: var(--ink-soft); }
 
 /* --------------------------------- news ---------------------------------- */
 
 .papers { display: block; }
 .paper { break-inside: auto; margin-bottom: 0.9em; }
 .paper > h3 { margin: 0 0 0.35em; color: var(--ink-soft); }
-.paper > h3 .age::before { content: "   "; white-space: pre; }
-.paper > h3 .age { color: var(--ink-faint); }
+.paper > h3 .stamp::before { content: "   "; white-space: pre; }
+.paper > h3 .stamp { color: var(--ink-faint); }
 /* With no bold left, a frozen feed is flagged by colour alone, so it has to carry. */
-.paper.is-stale > h3 .age { color: var(--down); }
+.paper.is-stale > h3 .stamp { color: var(--down); }
 
 .story { margin-bottom: 0.24em; break-inside: avoid; }
 .story:last-child { margin-bottom: 0; }
@@ -115,21 +139,9 @@ table.quotes .chg  { width: 11ch; text-align: right; }
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-/* --------------------------------- image --------------------------------- */
-
-/* Bounded in both directions so it cannot push the markets table onto page two.
-   The height cap is what actually binds; width follows to keep the aspect ratio. */
-.image img {
-  display: block;
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  margin-left: 3ch;
-}
-.image .credit { margin: 0.25em 0 0 3ch; color: var(--ink-faint); }
-
 /* ----------------------------- announcements ----------------------------- */
 
+.announcements > .paper + h2 { margin-top: 1.2em; }
 .announcements .ann { margin: 0 0 0.24em; padding-left: 3ch; text-indent: -3ch; }
 .announcements .venue { color: var(--ink-soft); }
 .announcements .venue::after { content: "  \00b7  "; white-space: pre; }
@@ -137,36 +149,24 @@ table.quotes .chg  { width: 11ch; text-align: right; }
 
 /* --------------------------------- poem ---------------------------------- */
 
-/* Fixed structure: page 1 is the day itself, page 2 the headlines, page 3 the poem.
-   Each of the two later sections starts its own page rather than beginning in whatever
-   gap the section above happens to leave. */
+/* Page 1 is the day itself, page 2 the headlines, page 3 the art section, and page 4
+   starts the poem. The later sections start cleanly rather than filling an earlier gap. */
 .section.papers-page,
 .section.announcements,
 .section.poem { break-before: page; }
 .poem .attrib { margin: 0; color: var(--ink-soft); }
-.poem .bio { margin: 0 0 0.55em; color: var(--ink-soft); }
-.poem .cite { color: var(--ink-faint); }
-.poem .verse { break-inside: avoid; }
-/* Poem lines can run past the column. A hanging indent makes a wrapped line read as
-   a continuation rather than as a new line of verse. */
-.poem .line { padding-left: 3ch; text-indent: -3ch; }
+.poem .epigraph { margin: 0.55em 0; padding-left: 3ch; color: var(--ink-soft); }
+.poem .source { margin: 0.7em 0 0; color: var(--ink-faint); }
+/* Daily poems are not length-capped and may span pages. Only individual lines stay
+   together; a hanging indent marks visual wrapping as a continuation. */
+.poem .line { padding-left: 3ch; text-indent: -3ch; break-inside: avoid; }
 .poem .line.blank { height: 0.55em; }
+.poem-meme { margin: 1.2em 0 0; break-inside: avoid; }
+.poem-meme img { display: block; max-width: 100%; width: auto; height: auto; }
 
 /* -------------------------------- footer --------------------------------- */
 
 .footer { margin-top: 1.4em; color: var(--ink-soft); }
-.footer .chips { display: inline; }
-.footer .chip { white-space: nowrap; }
-/* The gap between entries is a margin, not ::before content. Putting it in the content
-   meant the "chip + chip" rule overrode the stale and failed markers, so a broken
-   source still showed a "+". The template supplies a real space between chips, which
-   is also the only place the line is allowed to break. */
-.footer .chip + .chip { margin-left: 2ch; }
-.footer .chip::before { content: "+ "; }
-.footer .chip.stale::before { content: "! "; }
-.footer .chip.cached::before { content: "~ "; }
-.footer .chip.failed::before { content: "x "; }
-.footer .chip.stale, .footer .chip.failed { color: var(--down); }
 
 @media screen {
   body { background: #8b8e93; padding: 14mm 0; }

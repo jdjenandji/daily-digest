@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { esc, price, pct, num, timeIn, longDate, relAge } from '../lib/fmt.js';
+import { esc, price, pct, num, timeIn, longDate } from '../lib/fmt.js';
 
 const CSS = () => readFile(path.resolve(process.cwd(), 'src/render/styles.css'), 'utf8');
 
@@ -23,17 +23,15 @@ ${masthead(model, tz)}
   <h2>Weather · ${esc(model.location.label)}</h2>
   ${weatherBody(model, tz)}
 </section>
-<section class="section">
-  <h2>Markets</h2>
-  ${marketsTable(model, tz)}
-</section>
-${imageSection(model)}
+${marketsSections(model, tz)}
+${predictionsSection(model)}
 <section class="section papers-page">
   <h2>The Papers</h2>
-  <div class="papers">${onPage(model, 'papers').map(paper).join('\n')}</div>
+  <div class="papers">${onPage(model, 'papers').map((r) => paper(r, tz)).join('\n')}</div>
 </section>
 ${announcementsSection(model)}
 ${poemSection(model)}
+${memeImage(model)}
 ${footer(model, tz)}
 </div>
 </body></html>`;
@@ -113,12 +111,13 @@ function calendarList(model, tz) {
 
 /* -------------------------------- markets -------------------------------- */
 
-function marketsTable(model, tz) {
+function marketsSections(model, tz) {
   const r = model.markets;
-  if (!r?.ok) return `<p class="note">Market data unavailable: ${esc(r?.error ?? 'unknown error')}</p>`;
+  if (!r?.ok) return `<section class="section"><h2>Markets</h2>
+    <p class="note">Market data unavailable: ${esc(r?.error ?? 'unknown error')}</p></section>`;
   const d = r.data;
 
-  const rows = (g) => g.rows.map((q) => {
+  const rows = (quotes) => quotes.map((q) => {
     if (q.price == null) {
       return `<tr><td class="name">${esc(q.name)}</td><td class="last missing" colspan="2">unavailable</td></tr>`;
     }
@@ -131,19 +130,66 @@ function marketsTable(model, tz) {
     </tr>`;
   }).join('');
 
+  const group = (g, showLabel = true) => {
+    if (g.columns === 2) {
+      const middle = Math.ceil(g.rows.length / 2);
+      const columns = [g.rows.slice(0, middle), g.rows.slice(middle)];
+      return `<div class="market-group two-column">
+  ${showLabel ? `<h3>${esc(g.label)}</h3>` : ''}
+  <div class="quote-columns">${columns.map((column) =>
+    `<table class="quotes"><tbody>${rows(column)}</tbody></table>`).join('')}</div>
+</div>`;
+    }
+    return `<div class="market-group">
+  <h3>${esc(g.label)}</h3>
+  <table class="quotes"><tbody>${rows(g.rows)}</tbody></table>
+</div>`;
+  };
+
   const asOf = d.asOf ? `as of ${esc(timeIn(d.asOf, tz))}` : '';
   const note = d.degraded ? ` · ${d.live}/${d.total} live` : '';
+  const stockGroups = d.groups.filter((g) => g.columns === 2);
+  const marketGroups = d.groups.filter((g) => g.columns !== 2);
+  const stocks = stockGroups.length ? `<section class="section stocks-section">
+  <h2>Stocks</h2>
+  ${stockGroups.map((g) => group(g, false)).join('')}
+</section>` : '';
 
-  return d.groups.map((g) => `<div class="market-group">
-  <h3>${esc(g.label)}</h3>
-  <table class="quotes"><tbody>${rows(g)}</tbody></table>
-</div>`).join('')
-    + `<div class="market-group provider"><h3>${esc(d.provider)} ${asOf}${note}</h3></div>`;
+  return `${stocks}<section class="section">
+  <h2>Markets</h2>
+  ${marketGroups.map(group).join('')}
+  <div class="market-group provider"><h3>${esc(d.provider)} ${asOf}${note}</h3></div>
+</section>`;
+}
+
+function predictionsSection(model) {
+  const r = model.predictions;
+  if (!r || (r.ok && !r.data)) return '';
+  if (!r.ok) {
+    return `<section class="section predictions"><h2>Predictions</h2>
+      <p class="note">Polymarket unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
+  }
+  const d = r.data;
+  const rows = d.items.map((item) => `<div class="prediction">
+    <div class="probability">${esc(predictionPct(item.probability))}</div>
+    <div>${esc(item.question)}</div>
+  </div>`).join('');
+  return `<section class="section predictions">
+  <h2>Predictions</h2>
+  <div class="prediction-grid">${rows}</div>
+</section>`;
+}
+
+function predictionPct(probability) {
+  const pct = probability * 100;
+  if (pct > 0 && pct < 1) return '<1%';
+  if (pct > 99 && pct < 100) return '>99%';
+  return `${num(pct, 0)}%`;
 }
 
 /* --------------------------------- news ---------------------------------- */
 
-function paper(r) {
+function paper(r, tz) {
   const name = r.name ?? r.data?.name ?? r.id.replace('news_', '');
 
   if (!r.ok) {
@@ -151,63 +197,47 @@ function paper(r) {
       <p class="note">Feed unavailable.</p></article>`;
   }
   const d = r.data;
-  const age = d.newest ? relAge(Date.now() - d.newest) : '';
+  const asOf = d.newest ? `as of ${timeIn(d.newest, tz)}` : '';
 
   // A frozen feed that still returns HTTP 200 must be visibly flagged, not printed
   // as if it were today's news.
   const staleClass = d.stale ? ' is-stale' : '';
-  const label = d.stale ? `stale · ${age}` : age;
+  const label = d.stale ? `stale · ${asOf}` : asOf;
 
   const stories = d.items.map((i) =>
     `<div class="story"><p class="head">${esc(i.headline)}</p></div>`).join('');
 
   return `<article class="paper${staleClass}">
-  <h3><span>${esc(name)}</span><span class="age">${esc(label)}</span></h3>
+  <h3><span>${esc(name)}</span><span class="stamp">${esc(label)}</span></h3>
   ${stories}
 </article>`;
-}
-
-/* --------------------------------- image --------------------------------- */
-
-function imageSection(model) {
-  const r = model.image;
-  if (!r || (r.ok && !r.data)) return '';
-  const label = model.imageLabel ?? 'Mood of the day';
-  if (!r.ok) {
-    return `<section class="section"><h2>${esc(label)}</h2>
-      <p class="note">Image unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
-  }
-  const d = r.data;
-  const credit = [d.channel, d.owner].filter(Boolean).join(' · ');
-  // The cap lives in config and is applied here, not in the stylesheet, so the one
-  // number that decides whether page one still fits is actually the one you can edit.
-  const cap = model.imageMaxHeightMm ?? 70;
-  return `<section class="section image">
-  <h2>${esc(label)}</h2>
-  <img style="max-height:${cap}mm" src="${d.dataUri}" alt="${esc(d.title || 'image of the day')}">
-  <p class="credit">${esc(credit)}</p>
-</section>`;
 }
 
 /* ----------------------------- announcements ----------------------------- */
 
 function announcementsSection(model) {
   const r = model.announcements;
-  if (!r || (r.ok && !r.data)) return '';
+  const artNews = onPage(model, 'art');
+  if ((!r || (r.ok && !r.data)) && !artNews.length) return '';
   const label = model.announcementsLabel ?? 'Announcements';
-  if (!r.ok) {
-    return `<section class="section announcements"><h2>${esc(label)}</h2>
-      <p class="note">Announcements unavailable: ${esc(r.error ?? 'unknown error')}</p></section>`;
+
+  let announcements = '';
+  if (r && !r.ok) {
+    announcements = `<h2>${esc(label)}</h2>
+      <p class="note">Announcements unavailable: ${esc(r.error ?? 'unknown error')}</p>`;
+  } else if (r?.data) {
+    const d = r.data;
+    // Venue in grey ahead of the title, so the eye can still scan the exhibitions.
+    const rows = d.items.map((i) => `<p class="ann">${
+      i.venue ? `<span class="venue">${esc(i.venue)}</span>` : ''}${esc(i.title)}</p>`).join('');
+    announcements = `<h2>${esc(label)}</h2>
+      ${rows}
+      <p class="credit">${esc(d.source)}</p>`;
   }
-  const d = r.data;
-  // Venue in grey ahead of the title, so the eye can still scan the exhibitions.
-  const rows = d.items.map((i) => `<p class="ann">${
-    i.venue ? `<span class="venue">${esc(i.venue)}</span>` : ''}${esc(i.title)}</p>`).join('');
+
   return `<section class="section announcements">
-  <h2>${esc(label)}</h2>
-  ${rows}
-  <p class="credit">${esc(d.source)}</p>
-  ${onPage(model, 'art').map(paper).join('\n')}
+  ${artNews.map((r) => paper(r, model.timezone)).join('\n')}
+  ${announcements}
 </section>`;
 }
 
@@ -232,30 +262,33 @@ function poemSection(model) {
     ? `<div class="line">${esc(l)}</div>`
     : '<div class="line blank"></div>')).join('');
 
-  // Attributed because Wikipedia's text is CC BY-SA, and because a reader should be
-  // able to see where a claim about the poet came from.
-  const bio = d.bio
-    ? `<p class="bio">${esc(d.bio.text)} <span class="cite">${esc(d.bio.source)}</span></p>`
+  const translated = d.translatedBy?.length
+    ? ` · translated by ${esc(d.translatedBy.join(', '))}`
     : '';
+  const epigraph = d.epigraph ? `<p class="epigraph">${esc(d.epigraph)}</p>` : '';
+  const editorNote = d.editorNote ? `<p class="note">${esc(d.editorNote)}</p>` : '';
+  const credit = d.credit ? ` · ${esc(d.credit)}` : '';
 
   return `<section class="section poem">
   <h2>Poem</h2>
-  <p class="attrib">${esc(d.title)} · ${esc(d.author)}</p>
-  ${bio}
+  <p class="attrib">${esc(d.title)} · ${esc(d.author)}${translated}</p>
+  ${editorNote}
+  ${epigraph}
   <div class="verse">${lines}</div>
+  <p class="source">${esc(d.source)}${credit}</p>
 </section>`;
+}
+
+function memeImage(model) {
+  const r = model.meme;
+  if (!r?.ok || !r.data) return '';
+  const d = r.data;
+  const cap = model.memeMaxHeightMm ?? 50;
+  return `<div class="poem-meme"><img style="max-height:${cap}mm" src="${d.dataUri}" alt="${esc(d.title || 'meme of the day')}"></div>`;
 }
 
 /* -------------------------------- footer --------------------------------- */
 
 function footer(model, tz) {
-  // Joined with a real space so the line can break between entries rather than
-  // through the middle of a paper's name.
-  const chips = model.statuses.map((s) =>
-    `<span class="chip ${s.state}">${esc(s.label)}</span>`).join(' ');
-  return `<div class="footer">
-  <div class="chips">${chips}</div>
-  <div>Generated ${esc(timeIn(model.generatedAt, tz))} in ${(model.tookMs / 1000).toFixed(1)}s</div>
-</div>`;
+  return `<div class="footer">Generated ${esc(timeIn(model.generatedAt, tz))} in ${(model.tookMs / 1000).toFixed(1)}s</div>`;
 }
-

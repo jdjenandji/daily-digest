@@ -19,7 +19,7 @@ export async function attempt(id, fn) {
 }
 
 /**
- * Grade a result for the footer status strip.
+ * Grade a result for logging and the overall health summary.
  * Returns 'ok' | 'stale' | 'cached' | 'failed'.
  */
 export function grade(result) {

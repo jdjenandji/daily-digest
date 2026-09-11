@@ -1,5 +1,6 @@
 import { fetchWeather } from './sources/weather.js';
 import { fetchMarkets } from './sources/markets.js';
+import { fetchPredictions } from './sources/predictions.js';
 import { fetchNews, sources as newsSources } from './sources/news.js';
 import { fetchCalendar } from './sources/calendar.js';
 import { fetchPoem } from './sources/poem.js';
@@ -25,24 +26,26 @@ export async function collect(cfg) {
     fetchWeather(cfg),
     fetchCalendar(cfg),
     fetchMarkets(cfg),
+    fetchPredictions(cfg),
     fetchNews(cfg),
     fetchPoem(cfg),
-    fetchImage(cfg),
+    fetchImage(cfg, 'meme'),
     fetchAnnouncements(cfg),
   ]);
 
-  let weather, calendar, markets, news, poem, image, announcements;
+  let weather, calendar, markets, predictions, news, poem, meme, announcements;
   try {
-    [weather, calendar, markets, news, poem, image, announcements] = await Promise.race([work, budget]);
+    [weather, calendar, markets, predictions, news, poem, meme, announcements] = await Promise.race([work, budget]);
   } catch {
     // Budget blown: take whatever has resolved rather than producing nothing.
-    [weather, calendar, markets, news] = await Promise.all([
+    [weather, calendar, markets, predictions, news, poem, meme, announcements] = await Promise.all([
       Promise.resolve(weather).catch(() => null),
       Promise.resolve(calendar).catch(() => null),
       Promise.resolve(markets).catch(() => null),
+      Promise.resolve(predictions).catch(() => null),
       Promise.resolve(news).catch(() => []),
       Promise.resolve(poem).catch(() => null),
-      Promise.resolve(image).catch(() => null),
+      Promise.resolve(meme).catch(() => null),
       Promise.resolve(announcements).catch(() => null),
     ]);
   }
@@ -53,8 +56,9 @@ export async function collect(cfg) {
     { id: 'weather', label: cfg.location.label, state: grade(weather) },
     { id: 'calendar', label: 'Calendar', state: calendar?.data?.notice ? 'stale' : grade(calendar) },
     { id: 'markets', label: 'Markets', state: markets?.data?.degraded ? 'stale' : grade(markets) },
+    { id: 'predictions', label: 'Predictions', state: grade(predictions) },
     ...(poem?.data ? [{ id: 'poem', label: 'Poem', state: grade(poem) }] : []),
-    ...(image?.data ? [{ id: 'image', label: cfg.image?.label ?? 'Mood', state: grade(image) }] : []),
+    ...(meme?.data ? [{ id: 'meme', label: cfg.meme?.label ?? 'Meme', state: grade(meme) }] : []),
     ...(announcements?.data ? [{ id: 'announcements',
       label: cfg.announcements?.label ?? 'Announcements', state: grade(announcements) }] : []),
     // Index against the ENABLED sources, not cfg.news: a disabled paper shifts every
@@ -75,6 +79,7 @@ export async function collect(cfg) {
     weather,
     calendar,
     markets,
+    predictions,
     news: (news ?? []).map((r, i) => ({
       ...r,
       name: enabledNews[i]?.name ?? r.id,
@@ -82,10 +87,9 @@ export async function collect(cfg) {
       page: enabledNews[i]?.page ?? 'papers',
     })),
     poem,
-    image,
+    meme,
     announcements,
-    imageMaxHeightMm: cfg.image?.maxHeightMm,
-    imageLabel: cfg.image?.label,
+    memeMaxHeightMm: cfg.meme?.maxHeightMm,
     announcementsLabel: cfg.announcements?.label,
     statuses,
     degraded: statuses.filter((s) => s.state !== 'ok'),

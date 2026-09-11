@@ -7,7 +7,7 @@ const ID = 'markets';
 /**
  * Two providers behind one interface.
  *
- * CNBC is primary because it answers for all 15 instruments in a SINGLE request,
+ * CNBC is primary because it answers for nearly all configured instruments in a SINGLE request,
  * which is what keeps us under rate limits. Yahoo needs one request per symbol and
  * started returning 429 during development after only a few dozen calls, so it is
  * demoted to a per-instrument fallback for whatever CNBC does not cover.
@@ -46,6 +46,7 @@ export async function fetchMarkets(cfg) {
     asOf: latestSession([...quotes.values()]),
     groups: groups.map((g) => ({
       label: g.label,
+      columns: g.columns ?? 1,
       rows: g.symbols.map((id) => ({
         id,
         name: instruments[id]?.name ?? id,
@@ -99,7 +100,13 @@ async function fromYahoo(id, instrument, cfg) {
     + `${encodeURIComponent(instrument.yahoo)}?range=5d&interval=1d`;
   try {
     // range=5d survives market holidays and supplies the previous close for free.
-    const raw = await getJson(url, { timeoutMs: cfg.timeouts.quoteMs, retries: 0 });
+    const raw = await getJson(url, {
+      timeoutMs: cfg.timeouts.quoteMs,
+      retries: 0,
+      // Yahoo currently rate-limits the full Chrome UA used by the shared HTTP client
+      // while accepting its generic browser form for this public chart endpoint.
+      headers: { 'user-agent': 'Mozilla/5.0' },
+    });
     const r = raw?.chart?.result?.[0];
     const meta = r?.meta ?? {};
     let price = meta.regularMarketPrice;

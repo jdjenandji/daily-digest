@@ -9,14 +9,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * Fetch with a hard timeout and one retry on transient failure.
  * A 404 is never retried: that is a config problem, not a blip.
  */
-export async function get(url, { timeoutMs = 8000, accept = '*/*', retries = 1 } = {}) {
+export async function get(url, {
+  timeoutMs = 8000,
+  accept = '*/*',
+  retries = 1,
+  headers = {},
+} = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
         redirect: 'follow',
         signal: AbortSignal.timeout(timeoutMs),
-        headers: { 'user-agent': UA, accept, 'accept-language': 'en,de;q=0.8,fr;q=0.6' },
+        headers: {
+          'user-agent': UA,
+          accept,
+          'accept-language': 'en,de;q=0.8,fr;q=0.6',
+          ...headers,
+        },
       });
       if (!res.ok) {
         const err = new Error(`HTTP ${res.status}`);
