@@ -1,0 +1,329 @@
+{
+  "location": {
+    "label": "Berlin",
+    "latitude": 52.52,
+    "longitude": 13.405,
+    "timezone": "Europe/Berlin"
+  },
+  "calendar": {
+    "include": null,
+    "exclude": [
+      "Birthdays",
+      "Siri Suggestions"
+    ],
+    "includeAllDay": true
+  },
+  "output": {
+    "dir": "./out",
+    "filename": "daily-digest-{date}.pdf",
+    "writeLatest": true,
+    "openAfterGenerate": false
+  },
+  "headlinesPerSource": 4,
+  "news": [
+    {
+      "id": "wsj",
+      "name": "The Wall Street Journal",
+      "adapter": "rss",
+      "url": "https://feeds.content.dowjones.io/public/rss/RSSWorldNews"
+    },
+    {
+      "id": "ft",
+      "name": "Financial Times",
+      "adapter": "rss",
+      "url": "https://www.ft.com/rss/home"
+    },
+    {
+      "id": "nyt",
+      "name": "The New York Times",
+      "adapter": "rss",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    },
+    {
+      "id": "reuters",
+      "name": "Reuters",
+      "adapter": "sitemap",
+      "url": "https://www.reuters.com/arc/outboundfeeds/news-sitemap/?outputType=xml",
+      "excludeLocales": [
+        "de",
+        "fr",
+        "jp",
+        "br",
+        "cn",
+        "es",
+        "it",
+        "ar",
+        "kr",
+        "ru",
+        "in"
+      ]
+    },
+    {
+      "id": "bild",
+      "name": "Bild",
+      "adapter": "rss",
+      "url": "https://www.bild.de/feed/news.xml",
+      "kicker": true,
+      "enabled": false
+    },
+    {
+      "id": "lemonde",
+      "name": "Le Monde",
+      "adapter": "rss",
+      "url": "https://www.lemonde.fr/rss/une.xml",
+      "headlineLines": 3,
+      "headlineMaxChars": 150
+    },
+    {
+      "id": "artnet",
+      "name": "Artnet News",
+      "adapter": "rss",
+      "url": "https://news.artnet.com/feed",
+      "page": "art",
+      "limit": 8
+    }
+  ],
+  "markets": {
+    "provider": "cnbc",
+    "groups": [
+      {
+        "label": "Americas",
+        "symbols": [
+          "spx",
+          "dji",
+          "ixic"
+        ]
+      },
+      {
+        "label": "Europe",
+        "symbols": [
+          "dax",
+          "ftse",
+          "cac"
+        ]
+      },
+      {
+        "label": "Asia",
+        "symbols": [
+          "n225",
+          "hsi"
+        ]
+      },
+      {
+        "label": "Commodities",
+        "symbols": [
+          "gold",
+          "wti"
+        ]
+      },
+      {
+        "label": "Crypto",
+        "symbols": [
+          "btc"
+        ]
+      },
+      {
+        "label": "Stocks",
+        "columns": 2,
+        "symbols": [
+          "sp500acc",
+          "ftseallworld",
+          "physicalgold",
+          "alphabet",
+          "mscieuhighdiv",
+          "bloom",
+          "creditagricole",
+          "airbus",
+          "robinhood",
+          "goldmansachs"
+        ]
+      }
+    ],
+    "instruments": {
+      "spx": {
+        "name": "S&P 500",
+        "cnbc": ".SPX",
+        "yahoo": "^GSPC"
+      },
+      "dji": {
+        "name": "Dow Jones",
+        "cnbc": ".DJI",
+        "yahoo": "^DJI"
+      },
+      "ixic": {
+        "name": "Nasdaq Composite",
+        "cnbc": ".IXIC",
+        "yahoo": "^IXIC"
+      },
+      "dax": {
+        "name": "DAX",
+        "cnbc": ".GDAXI",
+        "yahoo": "^GDAXI"
+      },
+      "ftse": {
+        "name": "FTSE 100",
+        "cnbc": ".FTSE",
+        "yahoo": "^FTSE"
+      },
+      "cac": {
+        "name": "CAC 40",
+        "cnbc": ".FCHI",
+        "yahoo": "^FCHI"
+      },
+      "n225": {
+        "name": "Nikkei 225",
+        "cnbc": ".N225",
+        "yahoo": "^N225"
+      },
+      "hsi": {
+        "name": "Hang Seng",
+        "cnbc": ".HSI",
+        "yahoo": "^HSI"
+      },
+      "gold": {
+        "name": "Gold",
+        "cnbc": "@GC.1",
+        "yahoo": "GC=F",
+        "digits": 2
+      },
+      "wti": {
+        "name": "Oil (WTI)",
+        "cnbc": "@CL.1",
+        "yahoo": "CL=F",
+        "digits": 2
+      },
+      "btc": {
+        "name": "Bitcoin",
+        "cnbc": "BTC.CM=",
+        "yahoo": "BTC-USD"
+      },
+      "sp500acc": {
+        "name": "S&P 500 EUR Acc",
+        "cnbc": "SPYL-DE",
+        "yahoo": "SPYL.DE",
+        "digits": 2
+      },
+      "ftseallworld": {
+        "name": "FTSE All-World Acc",
+        "cnbc": "VWCE-DE",
+        "yahoo": "VWCE.DE",
+        "digits": 2
+      },
+      "physicalgold": {
+        "name": "Physical Gold Acc",
+        "cnbc": "PPFB-DE",
+        "yahoo": "PPFB.DE",
+        "digits": 2
+      },
+      "alphabet": {
+        "name": "Alphabet A",
+        "cnbc": "GOOGL",
+        "yahoo": "GOOGL",
+        "digits": 2
+      },
+      "mscieuhighdiv": {
+        "name": "MSCI Europe Div",
+        "yahoo": "EHF1.DE",
+        "digits": 2
+      },
+      "bloom": {
+        "name": "Bloom Energy",
+        "cnbc": "BE",
+        "yahoo": "BE",
+        "digits": 2
+      },
+      "creditagricole": {
+        "name": "Crédit Agricole",
+        "cnbc": "ACA-FR",
+        "yahoo": "ACA.PA",
+        "digits": 2
+      },
+      "airbus": {
+        "name": "Airbus",
+        "cnbc": "AIR-FR",
+        "yahoo": "AIR.PA",
+        "digits": 2
+      },
+      "robinhood": {
+        "name": "Robinhood A",
+        "cnbc": "HOOD",
+        "yahoo": "HOOD",
+        "digits": 2
+      },
+      "goldmansachs": {
+        "name": "Goldman Sachs",
+        "cnbc": "GS",
+        "yahoo": "GS",
+        "digits": 2
+      }
+    }
+  },
+  "predictions": {
+    "enabled": true,
+    "endpoint": "https://gamma-api.polymarket.com/markets",
+    "limit": 3,
+    "freshMinutes": 15,
+    "timeoutMs": 8000,
+    "maxStaleHours": 24
+  },
+  "timeouts": {
+    "weatherMs": 5000,
+    "newsMs": 8000,
+    "quoteMs": 5000,
+    "calendarMs": 8000,
+    "totalMs": 30000
+  },
+  "cache": {
+    "freshMinutes": 15,
+    "weatherMaxStaleHours": 6,
+    "marketsMaxStaleHours": 18,
+    "newsMaxStaleHours": 24
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 4174
+  },
+  "chrome": {
+    "executablePath": null
+  },
+  "schedule": {
+    "hour": 6,
+    "minute": 30
+  },
+  "print": {
+    "enabled": false,
+    "printer": null,
+    "media": "A4",
+    "sides": "two-sided-long-edge",
+    "colorMode": "monochrome",
+    "cancelPreviousJobs": true,
+    "extraOptions": []
+  },
+  "poem": {
+    "enabled": true,
+    "endpoint": "https://api.parse.bot/scraper/18773879-45ca-4c85-a458-3e9c4a4d59ca/get_poem_of_the_day",
+    "apiKey": null,
+    "timeoutMs": 8000,
+    "maxStaleDays": 7
+  },
+  "meme": {
+    "label": "Meme of the day",
+    "enabled": true,
+    "channel": "sacred-memes",
+    "variant": "display",
+    "maxKb": 400,
+    "maxHeightMm": 50,
+    "timeoutMs": 8000,
+    "downloadTimeoutMs": 15000,
+    "maxStaleDays": 7
+  },
+  "announcements": {
+    "enabled": true,
+    "label": "Announcements",
+    "url": "https://www.e-flux.com/announcements/",
+    "source": "e-flux",
+    "limit": 14,
+    "timeoutMs": 12000,
+    "maxStaleHours": 48
+  }
+}

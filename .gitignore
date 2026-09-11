@@ -1,0 +1,7 @@
+node_modules/
+config.json
+native/CalendarBridge.app/
+cache/
+logs/
+out/
+.DS_Store

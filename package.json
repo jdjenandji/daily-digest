@@ -1,0 +1,27 @@
+{
+  "name": "daily-digest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A daily PDF briefing: Berlin weather, calendar, six papers, world markets.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "digest": "node src/cli.js",
+    "build:native": "node scripts/build-native.mjs",
+    "calendar:auth": "node scripts/calendar-auth.mjs",
+    "calendars": "node -e \"import('./src/config.js').then(async m=>{const c=await m.loadConfig();const {listCalendars}=await import('./src/sources/calendar.js');for(const x of await listCalendars(c))console.log(x.title+'  ('+x.source+')')})\"",
+    "doctor": "node scripts/doctor.mjs",
+    "agent:install": "node scripts/install-agent.mjs",
+    "agent:uninstall": "node scripts/uninstall-agent.mjs",
+    "printers": "node -e \"import('./src/print.js').then(async m=>{const q=await m.queues();if(!q.length)return console.log('no printers configured');for(const p of q)console.log(p.name.padEnd(28)+(p.enabled?'enabled':'DISABLED')+'  '+p.state)})\"",
+    "print:test": "node scripts/print-test.mjs",
+    "print:dry": "node scripts/print-test.mjs --dry-run"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0",
+    "puppeteer-core": "^23.10.0"
+  }
+}
